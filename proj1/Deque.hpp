@@ -134,34 +134,69 @@ bool Deque_int_empty(Deque_int * d)
  *	Data entry methods
  *	push_back, push_front
  */
-void reallocateFront(Deque_int * d)
+void reallocateFront(Deque_int * d, int sizeMult)
 {
+	int newSize = d->maxFrontSize * sizeMult;
+	int * newArr = (int *)calloc(newSize, sizeof(int));
+
+	if(d->fb == -1)
+	{
+		for(int i = 0; i <= d->ff; i++)
+		{
+			newArr[i] = d->frontArr[i];
+		}
+	}else{
+		int i, j;	
+		for(i = d->fb, j = 0; i <= d->ff; i++, j++)
+		{
+			newArr[j] = d->frontArr[i];
+		}
+	}
+	d->fb = -1;
+	d->ff = d->frontSize - 1;
+	free(d->frontArr);
+	d->frontArr = newArr;
+	d->maxFrontSize = newSize;
 
 }
-void reallocateBack(Deque_int * d)
+void reallocateBack(Deque_int * d, int sizeMult)
 {
-	//int newSize = d->maxBackSize * 2;
+	int newSize = d->maxBackSize * sizeMult;
+	int * newArr = (int *)calloc(newSize, sizeof(int));
 
-
+	if(d->bf == -1)
+	{
+		for(int i = 0; i <= d->bb; i++)
+		{
+			newArr[i] = d->backArr[i];
+		}
+	}else{
+		int i, j;	
+		for(i = d->bf, j = 0; i <= d->bb; i++, j++)
+		{
+			newArr[j] = d->backArr[i];
+		}
+	}
+	d->bf = -1;
+	d->bb = d->backSize - 1;
+	free(d->backArr);
+	d->backArr = newArr;
+	d->maxBackSize = newSize;
 }
 
 //Push a value onto the back of the deque
 void Deque_int_push_back(Deque_int *d, int val)
 {
 	//If both arrays have values
-	cout << &d->backArr[d->bb + 1] << endl;
 	if((d->bf == -1) && (d->fb == -1))
 	{
 		(d->bb)++;
-		cout << "about to set the next val " << endl;
 		d->backArr[d->bb] = val;
 		(d->backSize)++;
 		//Check if back is too big
 		if((d->backSize / d->maxBackSize) > 0.8)
 		{
-			cout << "Back got too big reallocating.. size: " << d->backSize << ", " << d->maxBackSize << endl;
-			d->backArr = (int *)realloc(d->backArr, d->maxBackSize * 4);
-			d->maxBackSize = d->maxBackSize * 4;
+			reallocateBack(d, 2);
 		}
 
 	}
@@ -173,9 +208,7 @@ void Deque_int_push_back(Deque_int *d, int val)
 		//Check if back is too big
 		if((d->backSize / d->maxBackSize) > 0.8)
 		{
-			cout << "Back got too big reallocating.. size: " << d->backSize << ", " << d->maxBackSize << endl;
-			d->backArr = (int *)realloc(d->backArr, d->maxBackSize * 2);
-			d->maxBackSize = d->maxBackSize * 2;
+			reallocateBack(d, 2);
 		}
 
 	}
@@ -211,9 +244,7 @@ void Deque_int_push_front(Deque_int *d, int val)
 		//Check if front is too big
 		if((d->frontSize / d->maxFrontSize) > 0.8)
 		{
-			cout << "front got too big reallocating.. size: " << d->frontSize << ", " << d->maxFrontSize << endl;
-			d->frontArr = (int*)realloc(d->frontArr, d->maxFrontSize * 2);
-			d->maxFrontSize = d->maxFrontSize * 2;
+			reallocateFront(d, 2);
 		}
 	}
 	else if(d->fb > -1)//back is empty
@@ -224,9 +255,7 @@ void Deque_int_push_front(Deque_int *d, int val)
 		//Check if front is too big
 		if((d->frontSize / d->maxFrontSize) > 0.8)
 		{
-			cout << "front got too big reallocating.. size: " << d->frontSize << ", " << d->maxFrontSize << endl;
-			d->frontArr = (int *)realloc(d->frontArr, d->maxFrontSize * 2);
-			d->maxFrontSize = d->maxFrontSize * 2;
+			reallocateFront(d, 2);
 		}
 	}
 	else if(d->bf > -1)//front is empty
@@ -296,6 +325,7 @@ int Deque_int_at(Deque_int *d, int val)
 	return 0;
 }
 
+
 /*
  * Data removal methods
  *	pop_front, pop_back
@@ -310,17 +340,28 @@ void Deque_int_pop_front(Deque_int *d)
 	{
 		(d->bf)++;
 		(d->backSize)--;
+		if(d->bf > (d->maxBackSize/2))
+		{
+			reallocateBack(d, 1);
+		}
 		//Check if bf is bigger than half of backMax
 	}
 	else if(d->fb > -1)//back is empty
 	{
 		(d->ff)--;
-		(d->frontSize)--;
+		if(d->ff != -1)
+		{
+			
+			(d->frontSize)--;
+		}
 	}
 	else if((d->bf == -1) && (d->fb == -1))
 	{
 		(d->ff)--;
-		(d->frontSize)--;
+		if(d->ff != -1)
+		{
+			(d->frontSize)--;
+		}
 	}
 
 }
@@ -334,16 +375,28 @@ void Deque_int_pop_back(Deque_int *d)
 		(d->fb)++;
 		(d->frontSize)--;
 		//Check if fb > frontMax/2
+		if(d->fb > (d->maxFrontSize/2))
+		{
+			reallocateFront(d, 1);
+		}
 	}
 	else if(d->bf > -1)//front is empty
 	{
 		(d->bb)--;
-		(d->backSize)--;
+		if(d->bb != -1)
+		{
+			(d->backSize)--;
+
+		}
 	}
 	else if((d->bf == -1) && (d->fb == -1))
 	{
 		(d->bb)--;
-		(d->backSize)--;
+		if(d->bb != -1)
+		{
+			(d->backSize)--;
+
+		}
 	}
 }
 //Remove all values

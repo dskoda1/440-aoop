@@ -315,19 +315,21 @@ main() {
 
         for (int i = 0; i < 1000000; i++) {
             deq.push_back(&deq, i);
-        		print_Deque(&deq);
 				}
 				cout << "made it here" << endl;
+				print_Deque(&deq);
         // In one end, out the other.
         for (int i = 0; i < 200000000; i++) {
             // fprintf(stderr, "iter: %d\n", i);
             deq.push_back(&deq, i);
             deq.pop_front(&deq);
         }
+				print_Deque(&deq);
         for (int i = 0; i < 200000000; i++) {
             deq.push_front(&deq, i);
             deq.pop_back(&deq);
         }
+				print_Deque(&deq);
 
         // Random.
         int pf = 0, pb = 0, pof = 0, pob = 0;
@@ -352,6 +354,7 @@ main() {
                 }
             }
         }
+				print_Deque(&deq);
         printf("%d push_backs, %d push_fronts, %d pop_backs, %d pop_fronts, %d size\n", pb, pf, pob, pof, (int) deq.size(&deq));
         deq.dtor(&deq);
     }
