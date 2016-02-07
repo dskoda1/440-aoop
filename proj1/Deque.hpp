@@ -11,29 +11,7 @@
 using namespace std;
 
 #define Deque_DEFINE(T) Deque_int d;
-
-
-struct Deque_int_Iterator{
-	int * current;
-
-	int (*deref)(Deque_int_Iterator *di);
-
-	void (*inc)(Deque_int_Iterator *);
-	void (*dec)(Deque_int_Iterator *);
-
-};
-
-//Dereference the iterator at its location
-/*
-	 int Deque_int_Iterator_deref(Deque_int_Iterator * di)
-	 {
-	 return 1;
-	 }
- */
-bool Deque_int_Iterator_equal(Deque_int_Iterator d1, Deque_int_Iterator d2)
-{
-	return true;
-}
+struct Deque_int_Iterator;
 
 struct Deque_int{
 	/*
@@ -56,6 +34,9 @@ struct Deque_int{
 	int backSize;
 	double maxBackSize;
 
+	//Comparator function
+	bool (*comp)(const int&, const int&);
+
 	//Length
 	//Number of members that are actually in, returns length
 	int (*size)(Deque_int *);
@@ -63,8 +44,8 @@ struct Deque_int{
 	//Check if empty
 	bool (*empty)(Deque_int *);
 	//Identifier of struct name
-	char * type_name;
-
+	//char * type_name;
+	char type_name [sizeof("Deque_int")] = "Deque_int";
 	//Data entry methods
 	//Push a value onto the back of the deque
 	void (*push_back)(Deque_int *, int);
@@ -90,7 +71,78 @@ struct Deque_int{
 
 
 };
+struct Deque_int_Iterator{
+	int  current;
+	Deque_int * d;
+	int (*deref)(Deque_int_Iterator *di);
 
+	void (*inc)(Deque_int_Iterator *);
+	void (*dec)(Deque_int_Iterator *);
+
+};
+
+void Deque_int_iter_inc(Deque_int_Iterator * di)
+{
+	di->current += 1; 
+}
+void Deque_int_iter_dec(Deque_int_Iterator * di)
+{
+	di->current -= 1;
+
+}
+//Dereference the iterator at its location
+int Deque_int_Iterator_deref(Deque_int_Iterator * di)
+{
+	 return di->d->at(di->d, di->current);
+}
+bool Deque_int_Iterator_equal(Deque_int_Iterator d1, Deque_int_Iterator d2)
+{
+	if(d1.current == d2.current)
+	{	return true; }
+	else return false;
+
+
+}
+void setUpIterator(Deque_int_Iterator * di)
+{
+	di->inc = &Deque_int_iter_inc;
+	di->dec = &Deque_int_iter_dec;
+	di->deref = &Deque_int_Iterator_deref;
+}
+
+Deque_int_Iterator Deque_int_end(Deque_int * d)
+{
+	Deque_int_Iterator di;
+	setUpIterator(&di);
+	di.d = d;
+	if(d->bb >= 0)
+	{
+		di.current = d->frontSize + d->backSize;
+	}
+	else
+	{
+		di.current = d->frontSize;
+	}
+
+	return di;
+}
+
+Deque_int_Iterator Deque_int_begin(Deque_int * d)
+{
+  Deque_int_Iterator di;
+	di.d = d;
+	setUpIterator(&di);
+	if(d->ff >= 0)
+	{
+		di.current = d->ff;
+	}
+	else
+	{
+		di.current = d->bf;
+	}
+
+  return di;
+}
 void print_Deque(Deque_int * d)
 {
 	cout << "Information about deque: " << d << endl;
@@ -102,11 +154,22 @@ void print_Deque(Deque_int * d)
 	cout << "bf: " << d->bf << endl;
 	cout << "fb: " << d->fb << endl;
 	cout << "ff: " << d->ff << endl;
-
 }
 
 bool  Deque_int_equal(Deque_int d1, Deque_int d2)
 {
+	//Quick check of sizes first
+	if(d1.size(&d1) != d2.size(&d2))
+		return false;
+	
+	//Now iterate through and compare values
+	for(int i = 0; i < d1.size(&d1); i++)
+	{	
+		//check each comp function to be false;
+		if(d1.comp(d1.at(&d1, i), d2.at(&d2, i)) || d2.comp(d1.at(&d1, i), d2.at(&d2, i)))
+			return false;
+	}	
+	
 	return false;
 }
 /*
@@ -122,12 +185,10 @@ int Deque_int_size(Deque_int * d)
 bool Deque_int_empty(Deque_int * d)
 {
 	int size = d->backSize + d->frontSize;
-
 	if(size > 0)
 	{ return false; }
 	else
 	{	return true;	}
-
 }
 
 /*
@@ -187,91 +248,62 @@ void reallocateBack(Deque_int * d, int sizeMult)
 //Push a value onto the back of the deque
 void Deque_int_push_back(Deque_int *d, int val)
 {
-	//If both arrays have values
-	if((d->bf == -1) && (d->fb == -1))
-	{
-		(d->bb)++;
-		d->backArr[d->bb] = val;
-		(d->backSize)++;
-		//Check if back is too big
-		if((d->backSize / d->maxBackSize) > 0.8)
-		{
-			reallocateBack(d, 2);
-		}
-
-	}
-	else if(d->bf > -1)//front is empty
-	{
-		(d->bb)++;
-		d->backArr[d->bb] = val;
-		(d->backSize)++;
-		//Check if back is too big
-		if((d->backSize / d->maxBackSize) > 0.8)
-		{
-			reallocateBack(d, 2);
-		}
-
-	}
-	else if(d->fb > -1)//back is empty
+	//First case: no elements in back array, push to fb
+	if(d->fb >= 0 && d->bb == -1 && d->bf == -1)
 	{
 		(d->fb)--;
-		if(d->fb > -1)
-		{//push onto the back of the front
-			d->frontArr[d->fb] = val;
-			(d->frontSize)++;
+		if(d->fb >= 0)
+    {//push onto the back of the front
+      d->frontArr[d->fb] = val;
+      (d->frontSize)++;
 
-		}else
-		{//push onto the back of the back
-			(d->bb)++;
-			d->backArr[d->bb] = val;
-			(d->backSize)++;
-		}
-
-		//Dont need to check anything?
-
-	} 
+    }else
+    {//push onto the back of the back
+      (d->bb)++;
+      d->backArr[d->bb] = val;
+      (d->backSize)++;
+    }
+	}
+	else//Normal case, push to bb
+	{
+		(d->bb)++;
+		d->backArr[d->bb] = val;
+		(d->backSize)++;	
+		if((d->backSize / d->maxBackSize) > 0.8)
+    {
+      reallocateBack(d, 2);
+    }
+	}
 }
 //Push a value onto the front of the deque
 void Deque_int_push_front(Deque_int *d, int val)
 {
-	//if both arrays have values
-	//or are empty
-	if((d->bf == -1) && (d->fb == -1))
+	//First case: No elements in front, push to bf
+	if(d->bf >= 0 && d->ff == -1 && d->fb == -1)//front is empty
+  {
+    (d->bf)--;
+    if(d->bf >= 0)
+    {//push onto the front of the back
+      d->backArr[d->bf] = val;
+      (d->backSize)++;
+    }
+    else
+    {//push onto the front of the front
+      (d->ff)++;
+      d->frontArr[d->ff] = val;
+      (d->frontSize)++;
+    }
+  }
+	else//Normal: push to front
 	{
 		(d->ff)++;
-		d->frontArr[d->ff] = val;
-		(d->frontSize)++;
-		//Check if front is too big
-		if((d->frontSize / d->maxFrontSize) > 0.8)
-		{
-			reallocateFront(d, 2);
-		}
-	}
-	else if(d->fb > -1)//back is empty
-	{
-		(d->ff)++;
-		d->frontArr[d->ff] = val;
-		(d->frontSize)++;
-		//Check if front is too big
-		if((d->frontSize / d->maxFrontSize) > 0.8)
-		{
-			reallocateFront(d, 2);
-		}
-	}
-	else if(d->bf > -1)//front is empty
-	{
-		(d->bf)--;
-		if(d->bf > -1)
-		{//push onto the front of the back
-			d->backArr[d->bf] = val;
-			(d->backSize)++;
-		}
-		else
-		{//push onto the front of the front
-			(d->ff)++;
-			d->frontArr[d->ff] = val;
-			(d->frontSize)++;
-		}
+    d->frontArr[d->ff] = val;
+    (d->frontSize)++;
+    //Check if front is too big
+    if((d->frontSize / d->maxFrontSize) > 0.8)
+    {
+      reallocateFront(d, 2);
+    }
 	}
 }
 
@@ -321,8 +353,19 @@ int Deque_int_back(Deque_int *d)
 }
 //Get the value at the index
 int Deque_int_at(Deque_int *d, int val)
-{	
-	return 0;
+{
+	int ret = 0;
+	if(val <= d->frontSize - 1)
+	{
+		int inv = d->frontSize - val;
+		
+		ret = d->frontArr[inv + d->fb];
+	}	
+	else
+	{
+		ret = d->backArr[val - d->frontSize];
+	}
+	return ret;
 }
 
 
@@ -333,9 +376,6 @@ int Deque_int_at(Deque_int *d, int val)
 //Pop a value off the front
 void Deque_int_pop_front(Deque_int *d)
 {
-	//if both arrays have values
-	//or are empty
-	//print_Deque(d);
 	if(d->bf > -1 || d->ff == -1)//front is empty
 	{
 		(d->bf)++;
@@ -346,16 +386,7 @@ void Deque_int_pop_front(Deque_int *d)
 		}
 		//Check if bf is bigger than half of backMax
 	}
-	else if(d->fb > -1)//back is empty
-	{
-		(d->ff)--;
-		if(d->ff != -1)
-		{
-			
-			(d->frontSize)--;
-		}
-	}
-	else if((d->bf == -1) && (d->fb == -1))
+	else
 	{
 		(d->ff)--;
 		if(d->ff != -1)
@@ -363,7 +394,6 @@ void Deque_int_pop_front(Deque_int *d)
 			(d->frontSize)--;
 		}
 	}
-
 }
 //Pop a value off the back
 void Deque_int_pop_back(Deque_int *d)
@@ -380,22 +410,12 @@ void Deque_int_pop_back(Deque_int *d)
 			reallocateFront(d, 1);
 		}
 	}
-	else if(d->bf > -1)//front is empty
+	else
 	{
 		(d->bb)--;
 		if(d->bb != -1)
 		{
 			(d->backSize)--;
-
-		}
-	}
-	else if((d->bf == -1) && (d->fb == -1))
-	{
-		(d->bb)--;
-		if(d->bb != -1)
-		{
-			(d->backSize)--;
-
 		}
 	}
 }
@@ -407,20 +427,8 @@ void Deque_int_clear(Deque_int *d)
 	d->fb = -1;
 	d->bf = -1;
 	d->bb = -1;
-
-}
-//Iterator methods
-
-Deque_int_Iterator Deque_int_begin(Deque_int * d)
-{
-	Deque_int_Iterator di;
-	return di;
-}
-
-Deque_int_Iterator Deque_int_end(Deque_int * d)
-{
-	Deque_int_Iterator di;
-	return di;
+	d->frontSize = 0;
+	d->backSize = 0;
 }
 
 //Destructor
@@ -450,15 +458,9 @@ void Deque_int_ctor(Deque_int * d, bool (*f)(const int&, const int&))
 	d->maxBackSize = 1000;
 	d->backSize = 0;
 
+	d->comp = f;
 
 	d->empty = &Deque_int_empty;
-	//Type_name identifier for struct
-	/*
-		 char type [9];// = "Deque_int\0";
-		 d->type_name = (char *)malloc(strlen(type) + 1);
-		 memcpy(d->type_name, type, strlen(type));
-	//memcpy(d->type_name, type, strlen(type)+1); 
-	 */
 	//Pushing functions
 	d->push_back = &Deque_int_push_back;
 	d->push_front = &Deque_int_push_front;
