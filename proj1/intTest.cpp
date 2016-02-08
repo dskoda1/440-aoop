@@ -8,7 +8,7 @@
 #include <stdio.h>
 #include <random>
 #include <unistd.h>
-#include "Deque.hpp"
+#include "intDeque.hpp"
 
 // May assume memcpy()-able.
 // May assume = operator.
@@ -75,7 +75,7 @@ calloc(size_t num, size_t size) noexcept {
 
 /*
  * Test for class MyClass.
- */
+ 
 
 struct MyClass {
     int id;
@@ -94,7 +94,7 @@ MyClass_print(const MyClass *o) {
 }
 
 Deque_DEFINE(MyClass)
-
+*/
 /*
  * Test for int.
  */
@@ -107,7 +107,7 @@ Deque_DEFINE(int)
 
 int
 main() {
-    {
+  /*  {
         Deque_MyClass deq;
         Deque_MyClass_ctor(&deq, MyClass_less_by_id);
 
@@ -223,7 +223,7 @@ main() {
             deq2.dtor(&deq2);
         }
     }
-
+*/
     // Test that it can handle other types.  Tests are the same, more or less.
     {
         Deque_int deq;

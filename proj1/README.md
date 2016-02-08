@@ -5,7 +5,7 @@
 
 ####To compile:
 
-clang++ -g -std=c++11 -Wall -Wextra -pedantic test.cpp -ldl -Wno-unused-parameter -o test
+clang++ -g -std=c++11 -Wall -Wextra -pedantic test.cpp -ldl -O -o test
 
 ##Current Deque struct data members
 
