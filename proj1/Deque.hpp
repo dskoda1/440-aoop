@@ -14,11 +14,11 @@ using namespace std;
 struct Deque_int_Iterator;
 
 struct Deque_int{
-	/*
-	 *	This struct will be maintaining two different array, which will act	
-	 *	like one to the user. A front array, which has a front and back index,
-	 *	and a back array, which also has indices. 
-	 */
+	
+	// 	This struct will be maintaining two different array, which will act	
+	// 	like one to the user. A front array, which has a front and back index,
+	// 	and a back array, which also has indices. 
+	 
 
 	//Front array and pointers
 	int * frontArr;
@@ -48,9 +48,9 @@ struct Deque_int{
 	char type_name [sizeof("Deque_int")] = "Deque_int";
 	//Data entry methods
 	//Push a value onto the back of the deque
-	void (*push_back)(Deque_int *, int);
+	void (*push_back)(Deque_int *, const int &);
 	//push a value into the front of the deque
-	void (*push_front)(Deque_int *, int);
+	void (*push_front)(Deque_int *, const int &);
 
 	//Getter methods
 	int (*front)(Deque_int *);
@@ -166,11 +166,11 @@ bool  Deque_int_equal(Deque_int d1, Deque_int d2)
 	for(int i = 0; i < d1.size(&d1); i++)
 	{	
 		//check each comp function to be false;
-		if(d1.comp(d1.at(&d1, i), d2.at(&d2, i)) || d2.comp(d1.at(&d1, i), d2.at(&d2, i)))
+		if(d1.comp(d1.at(&d1, i), d2.at(&d2, i)) || d1.comp(d2.at(&d2, i), d1.at(&d1, i)))
 			return false;
 	}	
 	
-	return false;
+	return true;
 }
 /*
  *	Housekeeping methods
@@ -246,7 +246,7 @@ void reallocateBack(Deque_int * d, int sizeMult)
 }
 
 //Push a value onto the back of the deque
-void Deque_int_push_back(Deque_int *d, int val)
+void Deque_int_push_back(Deque_int *d, const int & val)
 {
 	//First case: no elements in back array, push to fb
 	if(d->fb >= 0 && d->bb == -1 && d->bf == -1)
@@ -271,12 +271,12 @@ void Deque_int_push_back(Deque_int *d, int val)
 		(d->backSize)++;	
 		if((d->backSize / d->maxBackSize) > 0.8)
     {
-      reallocateBack(d, 2);
+      reallocateBack(d, 3);
     }
 	}
 }
 //Push a value onto the front of the deque
-void Deque_int_push_front(Deque_int *d, int val)
+void Deque_int_push_front(Deque_int *d, const int & val)
 {
 	//First case: No elements in front, push to bf
 	if(d->bf >= 0 && d->ff == -1 && d->fb == -1)//front is empty
@@ -302,7 +302,7 @@ void Deque_int_push_front(Deque_int *d, int val)
     //Check if front is too big
     if((d->frontSize / d->maxFrontSize) > 0.8)
     {
-      reallocateFront(d, 2);
+      reallocateFront(d, 3);
     }
 	}
 }
@@ -380,7 +380,7 @@ void Deque_int_pop_front(Deque_int *d)
 	{
 		(d->bf)++;
 		(d->backSize)--;
-		if(d->bf > (d->maxBackSize/2))
+		if(d->bf > (d->maxBackSize/4))
 		{
 			reallocateBack(d, 1);
 		}
@@ -405,7 +405,7 @@ void Deque_int_pop_back(Deque_int *d)
 		(d->fb)++;
 		(d->frontSize)--;
 		//Check if fb > frontMax/2
-		if(d->fb > (d->maxFrontSize/2))
+		if(d->fb > (d->maxFrontSize/4))
 		{
 			reallocateFront(d, 1);
 		}
