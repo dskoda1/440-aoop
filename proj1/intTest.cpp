@@ -8,7 +8,7 @@
 #include <stdio.h>
 #include <random>
 #include <unistd.h>
-#include "intDeque.hpp"
+#include "Deque.hpp"
 
 // May assume memcpy()-able.
 // May assume = operator.
