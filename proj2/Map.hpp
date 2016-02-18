@@ -6,33 +6,50 @@
 using namespace std;
 
 namespace cs540{
-	template <class Key_T, class Mapped_T> class Map{
-
-
-		private:
+	template <class Key, class Mapped> class Map{
 
 		public:
+
 			//Constructors
 			Map();
 			Map(const Map & m);
 			~Map();
+
 			//TODO: typemember, the pair
 			//Operators
 			Map & operator = (const Map & m);
-			Mapped_T & operator [] (const Key_T & key);
+			Mapped & operator [] (const Key & key);
+
 			//TODO: ==, !=, <
 			//Housekeeping information
 			size_t size();
 			bool empty();
+			//Access key with .first, value with .second
+			typedef pair<Key, Mapped> ValueType;
+
+
+		private:
+			struct Node_base {
+				Node_base * next, prev;
+			};
+			struct Node : public Node_base {
+				Node(const ValueType & v) : val(v) {}
+				ValueType val;
+			};
+
+		public:
 
 			/*
 			 *	Nested iterator classes and methods
 			 */
 			class Iterator{
-				friend Map;
 				public:
+					
+					ValueType & operator * () const;
+					Iterator & operator = (const Iterator & i) {}
+					//Iterator constructIter();
 				private:
-				//Iterator();
+					Node_base * cur;
 			};
 
 			class ConstIterator{
@@ -46,61 +63,78 @@ namespace cs540{
 				private:
 					ReverseIterator();
 			};
-
-
-
 			//Iterator methods
 			Iterator begin();
+			Iterator end();
 
+			ConstIterator begin() const;
+			ConstIterator end() const;
+
+			ReverseIterator rbegin();
+			ReverseIterator rend();
 	};
+
+	/*
+	 *	Some common typedefs for use in methods section
+	 */
+	template<class Key, class Mapped>
+		using ValueType = typename Map<Key, Mapped>::ValueType;
+
+
+
 
 	/*
 	 *	Methods section
 	 *	----------------------------------------------------
 	 *	All of the methods described in the requirements are 
 	 *	implemented below as the api of this class.
-	 * template<class Key_T, class Mapped_T> Map<Key_T, Mapped_T>::
+	 * template<class Key, class Mapped> Map<Key, Mapped>::
 	 */
 
 	/*
 	 * Default constructor
 	 */ 
-	template<class Key_T, class Mapped_T> Map<Key_T, Mapped_T>::Map(){
-	}
+	template<class Key, class Mapped> 
+		Map<Key, Mapped>::Map(){
+		}
 
 
 	/*
 	 *	Copy Constructor
 	 */
-	template<class Key_T, class Mapped_T> Map<Key_T, Mapped_T>::Map(const Map & m){
+	template<class Key, class Mapped> 
+		Map<Key, Mapped>::Map(const Map & m){
 
-	}
+		}
 
 
 	/*
 	 *	Destructor
 	 */
-	template<class Key_T, class Mapped_T> Map<Key_T, Mapped_T>::~Map(){
+	template<class Key, class Mapped> 
+		Map<Key, Mapped>::~Map(){
 
-	}
+		}
 
 
 	/*
 	 *	Assignment operator
 	 */
-	template<class Key_T, class Mapped_T> Map<Key_T, Mapped_T> &  Map<Key_T, Mapped_T>::operator=(const Map & m){
+	template<class Key, class Mapped> 
+		Map<Key, Mapped> &  Map<Key, Mapped>::operator=(const Map & m){
 
-		return m;
-	}
+			return m;
+		}
 
 
 	/*
 	 *	Bracket operator
 	 */
-	template<class Key_T, class Mapped_T> Mapped_T & Map<Key_T, Mapped_T>::operator[](const Key_T & key){
-		Mapped_T x;
-		return x;
-	}
+	template<class Key, class Mapped> 
+		Mapped & Map<Key, Mapped>::operator[](const Key & key){
+			Mapped x;
+			return x;
+		}
 
 	//TODO: Rest of operators here: ==, !=, <
 
@@ -112,7 +146,7 @@ namespace cs540{
 	/*
 	 *	Size: returns the number of elements
 	 */
-	template<class Key_T, class Mapped_T> size_t Map<Key_T, Mapped_T>::size(){
+	template<class Key, class Mapped> size_t Map<Key, Mapped>::size(){
 		return 0;
 	}
 
@@ -120,7 +154,7 @@ namespace cs540{
 	/*
 	 *	Empty: returns whether or not the map is empty
 	 */
-	template<class Key_T, class Mapped_T> bool Map<Key_T, Mapped_T>::empty(){
+	template<class Key, class Mapped> bool Map<Key, Mapped>::empty(){
 		return false;
 	}
 
@@ -130,14 +164,39 @@ namespace cs540{
 	/*
 	 *	Iterator Class methods
 	 *	----------------------
+	 *	Typedefs for iterator classes
+	 *
 	 */
-	template<class Key_T, class Mapped_T> typename Map<Key_T, Mapped_T>::Iterator Map<Key_T, Mapped_T>::begin(){
-		Iterator i;
-		return i;
-	}
+	template<class Key, class Mapped> 
+		using Iterator = typename Map<Key, Mapped>::Iterator;
 
+	template<class Key, class Mapped> 
+		using ConstIterator = typename Map<Key, Mapped>::ConstIterator;
 
+	template<class Key, class Mapped> 
+		using ReverseIterator = typename Map<Key, Mapped>::ReverseIterator;
 
+	/*
+	 *	Regular Iterator functions
+	 */
+	//Begin
+	template<class Key, class Mapped> 
+		Iterator<Key, Mapped> Map<Key, Mapped>::begin(){
+			Iterator i;
+			return i;
+		}
+	//End 
+	template<class Key, class Mapped> 
+		Iterator<Key, Mapped> Map<Key, Mapped>::end(){
+			Iterator i;
+			return i;
+		}
+
+	//Dereference operator overload
+	template<class Key, class Mapped> 
+		ValueType<Key, Mapped> & Map<Key, Mapped>::Iterator::operator *()const {
+			return static_cast<Map<Key, Mapped>::Node * > (this->cur) ->val ;
+		}
 
 
 
