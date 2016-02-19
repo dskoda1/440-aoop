@@ -1,15 +1,39 @@
 #ifndef MAP_HPP
 #define MAP_HPP
 
+#define MAX_HEIGHT 32
+
 //Includes
 #include <iostream>
-using namespace std;
+#include <vector>
+//using namespace std;
 
 namespace cs540{
 	template <class Key, class Mapped> class Map{
 
 		public:
 
+			//Access key with .first, value with .second
+			typedef std::pair<Key, Mapped> ValueType;
+
+		private:
+			struct Node_base {
+					Node_base * next, * prev;
+					Node_base() {}
+			};
+			struct Node : Node_base {
+				Node() {};
+				Node(const ValueType & v) : val(v){}
+				ValueType val;
+				Node_base * forwards;
+
+			};
+
+			Node * sentinel;
+
+
+
+		public:
 			//Constructors
 			Map();
 			Map(const Map & m);
@@ -24,20 +48,7 @@ namespace cs540{
 			//Housekeeping information
 			size_t size();
 			bool empty();
-			//Access key with .first, value with .second
-			typedef pair<Key, Mapped> ValueType;
-
-
-		private:
-			struct Node_base {
-				Node_base * next, prev;
-			};
-			struct Node : public Node_base {
-				Node(const ValueType & v) : val(v) {}
-				ValueType val;
-			};
-
-		public:
+			
 
 			/*
 			 *	Nested iterator classes and methods
@@ -47,9 +58,10 @@ namespace cs540{
 					
 					ValueType & operator * () const;
 					Iterator & operator = (const Iterator & i) {}
+					Node_base * cur;
+					
 					//Iterator constructIter();
 				private:
-					Node_base * cur;
 			};
 
 			class ConstIterator{
@@ -80,7 +92,8 @@ namespace cs540{
 	template<class Key, class Mapped>
 		using ValueType = typename Map<Key, Mapped>::ValueType;
 
-
+	//template<class Key, class Mapped>
+	//	using Node = typename Map<Key, Mapped>::Node;
 
 
 	/*
@@ -96,7 +109,9 @@ namespace cs540{
 	 */ 
 	template<class Key, class Mapped> 
 		Map<Key, Mapped>::Map(){
-		}
+			sentinel = new Node();
+			sentinel->forwards = new Node_base[MAX_HEIGHT];
+	}
 
 
 	/*
@@ -183,6 +198,8 @@ namespace cs540{
 	template<class Key, class Mapped> 
 		Iterator<Key, Mapped> Map<Key, Mapped>::begin(){
 			Iterator i;
+			
+
 			return i;
 		}
 	//End 
@@ -195,7 +212,7 @@ namespace cs540{
 	//Dereference operator overload
 	template<class Key, class Mapped> 
 		ValueType<Key, Mapped> & Map<Key, Mapped>::Iterator::operator *()const {
-			return static_cast<Map<Key, Mapped>::Node * > (this->cur) ->val ;
+			//return static_cast<Map<Key, Mapped>::Node * > (this->cur) ->val ;
 		}
 
 

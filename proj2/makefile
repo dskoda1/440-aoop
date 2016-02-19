@@ -1,14 +1,16 @@
 CXX= clang++
-CXXFLAGS= -std=c++11 -Wall -Wextra -pedantic -g
+CXXFLAGS= -std=c++11 -Wall -Wextra -pedantic -Wno-unused-parameter -g
+
+
 
 all: Test
 	
 
 Test: Test.o
-	
+	$(CXX) $(CXXFLAGS) -o Test Test.o
 
 Test.o: Test.cpp Map.hpp
-	$(CXX) $(CXXFLAGS) Test.cpp Map.hpp
+	$(CXX) $(CXXFLAGS) -c Test.cpp
 	
 clean:
 	 rm -rf *.gch Test
