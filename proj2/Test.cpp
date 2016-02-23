@@ -1,24 +1,19 @@
-#include "Map.hpp"
-#include "assert.h"
-
 #include <iostream>
+#include <string.h>
+#include <assert.h>
+#include "Map.hpp"
+
 
 using namespace std;
-using namespace cs540;
-int main(){
+int main(int argc, char** argv){
 
-
-	//Begin testing of functionality
-	{
-
-		Map<int, int> * m = new cs540::Map<int, int>();
-	
-
-		Map<int, int>::Iterator i = m->begin();
-
-		
-
-
+	cs540::Map<int, int> m;
+	for(int i = 0; i < 20; i++){
+		m.insert(make_pair(i, i));
 
 	}
+	
+
+
+	return 0;
 }

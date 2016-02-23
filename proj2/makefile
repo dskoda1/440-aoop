@@ -1,5 +1,5 @@
 CXX= clang++
-CXXFLAGS= -std=c++11 -Wall -Wextra -pedantic -Wno-unused-parameter -g
+CXXFLAGS= -std=c++11 -Wall -Wextra -pedantic -Wno-unused-parameter -Wno-return-type -g
 
 
 
@@ -13,4 +13,4 @@ Test.o: Test.cpp Map.hpp
 	$(CXX) $(CXXFLAGS) -c Test.cpp
 	
 clean:
-	 rm -rf *.gch Test
+	 rm -rf *.o *.gch Test
