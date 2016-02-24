@@ -29,24 +29,58 @@ namespace cs540{
 			class Node : public BaseNode{
 				friend class Map;
 				void rHeight(){
-
 					int i = 0;
 					for( ; (((double)rand() / RAND_MAX) >= 0.5) && i < MAX_HEIGHT; i++){}
-					forward = new BaseNode * [i + 1];
+					height = i + 1;
+					forward = new BaseNode *[height];
+					return;
 				}
+				//Default constructor
+				Node(){
+				}
+				//Explicit height constructor
+				Node(int heightIn){
+					height = heightIn;
+					forward = new BaseNode * [heightIn];
+				}
+				//Explicist value constructor
 				Node(const ValueType & v) : first(v.first), second(v.second){
 					rHeight();
 				}
+				//Data members 
 				int height;
 				Key first;
 				Mapped second;
 				BaseNode ** forward;
 			};
-			int height;
-			BaseNode ** head;
+			Node * head;
 
 		private:
+			Node * findNode(Key k){
+				//Node * update = new Node(MAX_HEIGHT);
+				Node * ret;
 
+
+
+
+				/*for(int i = 0; i < MAX_HEIGHT; i++){
+					ret->forward[i] = head->forward[i];
+					}
+				//Start at the max index
+				for(int i = MAX_HEIGHT - 1; i >= 0; i--){
+				//Attemp to move the tmp pointer fwd if 
+				//Next bn ptr at that lvl is not null
+				//and is < key looking for
+				if(ret->forward[i] != NULL){
+				while((ret->forward[i]->next != NULL) && (static_cast<Node*>(ret->forward[i]->next)->first > k))
+				{
+				ret->forward[i] = ret->forward[i]->next;
+				}
+				}
+				}
+				 */
+				return ret;
+			}
 
 
 		public:
@@ -126,22 +160,24 @@ namespace cs540{
 
 			std::pair<Iterator, bool> insert(const ValueType& t){
 				Node * newNode = new Node(t);
-				//Need to search through the skip list here to insert
-
-
-				/*
-				Node * tmp = static_cast<Node*>(head[MAX_HEIGHT - 1]);
-				for(int i = MAX_HEIGHT - 1; i >= 0; i--){
-					for( ; tmp->forward[i] != NULL; tmp= tmp->forward[i]){
-						if(tmp->forward[i].first > 0 )
-							continue;
-
-					
-
+				//The array of base nodes we set to update after finding key
+				BaseNode * update[MAX_HEIGHT];
+				Node * currNode = head;
+				for(int i = MAX_HEIGHT-1; i >= 0; i--)
+				{
+					while(currNode->forward[i] != NULL && (static_cast<Node*>(currNode->forward[i])->first > t.first))
+					{
+						currNode = static_cast<Node*>(currNode->forward[i]);
 					}
-
+					update[i] = currNode;
 				}
-				*/
+
+				//Arrived at either end of list or value wanted
+				for(int i = newNode->height - 1; i>=0; i--)
+				{
+					newNode->forward[i] = static_cast<Node*>(update[i])->forward[i];
+					static_cast<Node*>(update[i])->forward[i] = newNode;
+				}	
 				Iterator iter;
 				return std::make_pair(iter, false);	
 			}			
@@ -189,7 +225,7 @@ namespace cs540{
 	template<class Key, class Mapped> 
 		Map<Key, Mapped>::Map(){
 			srand(time(NULL));
-			head = new BaseNode * [MAX_HEIGHT];
+			head = new Node(MAX_HEIGHT);
 		}
 
 

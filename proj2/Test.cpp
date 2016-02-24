@@ -8,11 +8,11 @@ using namespace std;
 int main(int argc, char** argv){
 
 	cs540::Map<int, int> m;
-	for(int i = 0; i < 20; i++){
-		m.insert(make_pair(i, i));
+	for(int i = 20; i > 0; i--){
+		auto pair = make_pair(i, i);
+		m.insert(pair);
 
 	}
-	
 
 
 	return 0;
