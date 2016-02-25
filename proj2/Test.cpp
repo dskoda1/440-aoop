@@ -8,12 +8,19 @@ using namespace std;
 int main(int argc, char** argv){
 
 	cs540::Map<int, int> m;
-	for(int i = 20; i > 0; i--){
-		auto pair = make_pair(i, i);
+	srand(time(NULL));
+	for(int i = 0; i <5; i++){
+		int k = rand();
+		auto pair = make_pair(k, k);
 		m.insert(pair);
 
 	}
 
+	for(auto it = m.begin(); it != m.end(); it++)
+	{
+
+	}
+		
 
 	return 0;
 }

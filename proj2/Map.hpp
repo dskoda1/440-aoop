@@ -48,39 +48,15 @@ namespace cs540{
 					rHeight();
 				}
 				//Data members 
-				int height;
-				Key first;
-				Mapped second;
-				BaseNode ** forward;
+				private:
+					int height;
+					Key first;
+					Mapped second;
+					BaseNode ** forward;
 			};
 			Node * head;
 
 		private:
-			Node * findNode(Key k){
-				//Node * update = new Node(MAX_HEIGHT);
-				Node * ret;
-
-
-
-
-				/*for(int i = 0; i < MAX_HEIGHT; i++){
-					ret->forward[i] = head->forward[i];
-					}
-				//Start at the max index
-				for(int i = MAX_HEIGHT - 1; i >= 0; i--){
-				//Attemp to move the tmp pointer fwd if 
-				//Next bn ptr at that lvl is not null
-				//and is < key looking for
-				if(ret->forward[i] != NULL){
-				while((ret->forward[i]->next != NULL) && (static_cast<Node*>(ret->forward[i]->next)->first > k))
-				{
-				ret->forward[i] = ret->forward[i]->next;
-				}
-				}
-				}
-				 */
-				return ret;
-			}
 
 
 		public:
@@ -112,18 +88,26 @@ namespace cs540{
 
 			class Iterator : public BaseIter{
 				public:
-					Iterator & operator ++ (){}
+					friend class Map;
+					Iterator & operator ++ (){
+						cur = static_cast<Node*>(cur->forward[0]);	
+						first = cur->first;
+						second = cur->second;
+					}
 					Iterator operator ++ (int i){}
 					Iterator & operator -- (){}
 					Iterator operator -- (int i){}
 
 					ValueType & operator * () const{}
-					//ValueType * operator -> ();
+					ValueType * operator -> (){}
+					
 					Iterator & operator = (const Iterator & i){}
-					//Node_base * cur;
-					bool &operator == (const Iterator & rhs){}			
-					bool &operator !=(const Iterator & rhs){}
+				
+					Key first;
+					Key second;
 				private:
+					Node * cur;
+					Node * head;
 			};
 
 			class ConstIterator{
@@ -149,8 +133,24 @@ namespace cs540{
 					ReverseIterator();
 			};
 			//Iterator methods
-			Iterator begin(){}
-			Iterator end(){}
+			Iterator begin(){
+				Iterator i;
+				i.head = head;
+				i.cur = static_cast<Node *>(head->forward[0]);
+				i.first = i.cur->first;
+				i.second = i.cur->second;
+
+				return i;
+			}
+			Iterator end(){
+				Iterator i;
+				i.head = head;
+				i.cur = 0;
+				i.first = 0;
+				i.second = 0;
+		
+				return i;
+			}
 
 			ConstIterator begin() const{}
 			ConstIterator end() const{}
@@ -158,26 +158,33 @@ namespace cs540{
 			ReverseIterator rbegin(){}
 			ReverseIterator rend(){}
 
-			std::pair<Iterator, bool> insert(const ValueType& t){
-				Node * newNode = new Node(t);
-				//The array of base nodes we set to update after finding key
-				BaseNode * update[MAX_HEIGHT];
+			BaseNode ** findNode(Key k){
+				static BaseNode * ret [MAX_HEIGHT];
+				
 				Node * currNode = head;
 				for(int i = MAX_HEIGHT-1; i >= 0; i--)
-				{
-					while(currNode->forward[i] != NULL && (static_cast<Node*>(currNode->forward[i])->first > t.first))
-					{
-						currNode = static_cast<Node*>(currNode->forward[i]);
-					}
-					update[i] = currNode;
-				}
+        {
+          while(currNode->forward[i] != NULL && (static_cast<Node*>(currNode->forward[i])->first < k))
+          {
+            currNode = static_cast<Node*>(currNode->forward[i]);
+          }
+          ret[i] = currNode;
+        }
+				return ret;
+			}	
 
-				//Arrived at either end of list or value wanted
+			std::pair<Iterator, bool> insert(const ValueType& t){
+				Node * newNode = new Node(t);
+				
+				//Get the node right before we want to insert
+				BaseNode ** update = findNode(t.first);
+
 				for(int i = newNode->height - 1; i>=0; i--)
 				{
 					newNode->forward[i] = static_cast<Node*>(update[i])->forward[i];
 					static_cast<Node*>(update[i])->forward[i] = newNode;
-				}	
+				}
+
 				Iterator iter;
 				return std::make_pair(iter, false);	
 			}			
@@ -192,10 +199,6 @@ namespace cs540{
 
 
 	};
-
-	/*
-	 *	Some common typedefs for use in methods section
-	 */
 	template<class Key, class Mapped>
 		using ValueType = typename Map<Key, Mapped>::ValueType;
 
@@ -208,137 +211,50 @@ namespace cs540{
 	template<class Key, class Mapped> 
 		using ReverseIterator = typename Map<Key, Mapped>::ReverseIterator;
 
-	//template<class Key, class Mapped>
-	//	using Node = typename Map<Key, Mapped>::Node;
-
-
-	/*
-	 *	Methods section
-	 *	----------------------------------------------------
-	 *	All of the methods described in the requirements are 
-	 *	implemented below as the api of this class.
-	 * template<class Key, class Mapped> Map<Key, Mapped>::
-	 */
-	/*
-	 *	Default constructor
-	 */
 	template<class Key, class Mapped> 
 		Map<Key, Mapped>::Map(){
 			srand(time(NULL));
 			head = new Node(MAX_HEIGHT);
 		}
 
-
-	/*
-	 *	Copy Constructor
-	 */
 	template<class Key, class Mapped> 
 		Map<Key, Mapped>::Map(const Map<Key, Mapped> & m){
 
 		}
 
-
-	/*
-	 *	Destructor
-	 */
 	template<class Key, class Mapped> 
 		Map<Key, Mapped>::~Map(){
 
 		}
 
-
-	/*
-	 *	Assignment operator
-	 */
 	template<class Key, class Mapped> 
 		Map<Key, Mapped> &  Map<Key, Mapped>::operator=(const Map & m){
 
 			return m;
 		}
 
-
-	/*
-	 *	Bracket operator
-	 */
 	template<class Key, class Mapped> 
 		Mapped & Map<Key, Mapped>::operator[](const Key & key){
 		}
 
-	//TODO: Rest of operators here: ==, !=, <
-
-	/*
-	 *	---------------------------------
-	 *	Housekeeping information methods
-	 */
-
-	/*
-	 *	Size: returns the number of elements
-	 */
 	template<class Key, class Mapped> size_t Map<Key, Mapped>::size(){
 		return 0;
 	}
 
-
-	/*
-	 *	Empty: returns whether or not the map is empty
-	 */
 	template<class Key, class Mapped> 
 		bool Map<Key, Mapped>::empty(){
 			return false;
 		}
-	/*template<class Key, class Mapped>
-		std::pair<Iterator<Key, Mapped>, bool> insert(const ValueType<Key, Mapped>& t){
-		Iterator<Key, Mapped> iter;	
-
-		return std::make_pair(iter, false);
-		}			
-	 */
-
-	/*
-	 *	Iterator Class methods
-	 *	----------------------
-	 *	Typedefs for iterator classes
-	 *
-	 */
-
-	/*
-	 *	Regular Iterator functions
-	//Begin
-	template<class Key, class Mapped> 
-	Iterator<Key, Mapped> Map<Key, Mapped>::begin(){
-	Iterator i;
 
 
-	return i;
-	}
-	//End 
-	template<class Key, class Mapped> 
-	Iterator<Key, Mapped> Map<Key, Mapped>::end(){
-	Iterator i;
-	return i;
-	}
-	 */
-
-
-
-	//Body of the Iterator dereference
-	//Dereference operator overload
-	/*	template<class Key, class Mapped> 
-			ValueType<Key, Mapped> & Map<Key, Mapped>::Iterator::operator *() const {
-			return static_cast<Map<Key, Mapped>::Node * > (this->cur) ->val ;
-			}
-	//Body of the Const Iterator deref
-	template<class Key, class Mapped> 
-	const ValueType<Key, Mapped> & Map<Key, Mapped>::ConstIterator::operator *() const {
-	return static_cast<Map<Key, Mapped>::Node * > (this->cur) ->val ;
-	}
-	 */
-
-
-
-
-
-
+	template<class Key, class Mapped>
+		bool operator==(const Iterator<Key, Mapped> & l, const Iterator<Key, Mapped> & r){
+			return false;
+		}	
+	template<class Key, class Mapped>
+		bool operator!=(const Iterator<Key, Mapped> & l, const Iterator<Key, Mapped> & r){
+			return false;
+		}	
 
 
 }
