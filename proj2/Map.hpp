@@ -38,10 +38,16 @@ namespace cs540{
 				//Default constructor
 				Node(){
 				}
+				~Node(){
+					delete [] forward;
+				}
 				//Explicit height constructor
 				Node(int heightIn){
 					height = heightIn;
 					forward = new BaseNode * [heightIn];
+					for(int i = 0; i < heightIn; i++){
+						forward[0] = NULL;
+					}
 				}
 				//Explicist value constructor
 				Node(const ValueType & v) : val(v), first(v.first), second(v.second){
@@ -53,20 +59,50 @@ namespace cs540{
 				ValueType val;
 				Key first;
 				Mapped second;
+				BaseNode * back;
 				BaseNode ** forward;
 			};
+
+			//Data members that should be private eventually
 			Node * head;
+			Node * tail;
 
 		private:
 
 
 		public:
 			//Constructors
-			Map();
-			Map(const Map & m);
-			Map(std::initializer_list<std::pair<const Key, Mapped>> l){}
+			Map(){
+				srand(time(NULL));
+				head = new Node(MAX_HEIGHT);
+				tail = NULL;
+			}
+			Map(const Map & m){
 
-			~Map();
+			}
+			Map(std::initializer_list<std::pair<const Key, Mapped>> l){}
+			//Check while curr has a next
+			//Set temp to be curr next
+			//delete curr
+			//Assign curr to be temp
+
+			~Map(){
+				//Has at least one element
+				Node * curr = static_cast<Node*>(head->forward[0]);
+				if(curr != NULL){
+					while(curr->forward[0] != NULL){
+						Node * temp = static_cast<Node *>(curr->forward[0]);
+						std::cout << curr->first << std::endl;
+						delete curr;
+						curr = temp;
+					}
+
+					delete curr;
+				}
+				delete head;
+
+
+			}
 
 			//TODO: typemember, the pair
 			//Operators
@@ -82,7 +118,7 @@ namespace cs540{
 				friend class Map;
 				public:
 				Iterator(){}
-				Iterator(Node * headIn, Node* curIn) : first(curIn->first), second(curIn->second), head(headIn), cur(curIn){}	
+				Iterator(Map * mapIn, Node* curIn) : first(curIn->first), second(curIn->second), map(mapIn), cur(curIn){}	
 
 				Iterator & operator ++ (){
 					if(static_cast<Node*>(cur->forward[0]) != NULL){
@@ -96,7 +132,19 @@ namespace cs540{
 				}
 				Iterator operator ++ (int i){}
 
-				Iterator & operator -- (){}
+				Iterator & operator -- (){
+					if(cur !=  NULL){
+						cur = static_cast<Node*>(cur->back);
+						first = cur->first;
+						second = cur->second;
+
+					}else{
+						cur = map->tail;
+						first = cur->first;
+						second = cur->second;
+					}
+					return *(this);
+				}
 				Iterator operator -- (int i){}
 
 				ValueType & operator * () const{
@@ -106,18 +154,127 @@ namespace cs540{
 
 				Iterator & operator = (const Iterator & i){}
 				friend bool operator == (const Iterator & lhs, const Iterator & rhs){
-					return (lhs.cur == rhs.cur && lhs.head == rhs.head);
+					return (lhs.cur == rhs.cur && lhs.map->head == rhs.map->head);
 				}
 				friend bool operator != (const Iterator & lhs, const Iterator & rhs){
 					return !(lhs == rhs);
 				}
+				friend std::ostream& operator <<(std::ostream& os, const Iterator & it){
+					os << "Key: " << it.first << " Value: " << it.second;
+					return os;
+
+				}
 				Key first;
 				Mapped second;
 				private:
-				Node * head;
+				Map * map;
 				Node * cur;
 			};
 
+			//Iterator methods
+			Iterator begin(){
+				Iterator i;
+				i.map = this;
+				i.cur = static_cast<Node *>(head->forward[0]);
+				i.first = i.cur->first;
+				i.second = i.cur->second;
+
+				return i;
+			}
+			Iterator end(){
+				Iterator i;
+				i.map = this;
+				i.cur = NULL;
+				//i.cur->back = tail;
+				//i.first = NULL;
+				//i.second = NULL;
+
+				return i;
+			}
+			//TODO:
+			//ConstIterator begin() const{}
+			//ConstIterator end() const{}
+			//TODO:
+			//ReverseIterator rbegin(){}
+			//ReverseIterator rend(){}
+
+			BaseNode ** findNode(Key k){
+				static BaseNode * ret [MAX_HEIGHT];
+
+				Node * currNode = head;
+				for(int i = MAX_HEIGHT-1; i >= 0; i--)
+				{
+					while(currNode->forward[i] != NULL && (static_cast<Node*>(currNode->forward[i])->first < k))
+					{
+						currNode = static_cast<Node*>(currNode->forward[i]);
+					}
+					ret[i] = currNode;
+				}
+				return ret;
+			}	
+
+			std::pair<Iterator, bool> insert(const ValueType& t){
+				Node * newNode = new Node(t);
+
+				//Get the node right before we want to insert
+				BaseNode ** update = findNode(t.first);
+
+				//TODO:
+				//Need to check if node with t.key already in or not
+				for(int i = newNode->height - 1; i>=0; i--)
+				{
+					newNode->forward[i] = static_cast<Node*>(update[i])->forward[i];
+					static_cast<Node*>(update[i])->forward[i] = newNode;
+				}
+				//Update the back ref
+				newNode->back = update[0];
+				//Update the maps tail if need be
+				if(tail == NULL){
+					tail = newNode;
+				}else if(tail->first < t.first){
+					tail = newNode;
+				}
+				Iterator iter(this, newNode);
+				return std::make_pair(iter, true);	
+			}			
+
+			void erase(Iterator pos){}
+			void erase(const Key pos){}	
+			Iterator find(const Key & k){
+				Node * previous = static_cast<Node*>(findNode(k)[0]);
+				if(previous != NULL && previous->forward[0] != NULL)
+				{
+					Node * match = static_cast<Node *>(previous->forward[0]);
+					if(match->first == k){
+						return Iterator(this, match);
+					}else{
+						std::cerr << "Map::find got a non null before node, but key doesnt match" << std::endl;
+						return end();	
+					}	
+				}else{
+					return end();
+				}
+
+			}
+			//ConstIterator find(const Key & k) const{}
+
+
+
+
+
+	};
+	template<class Key, class Mapped>
+		using ValueType = typename Map<Key, Mapped>::ValueType;
+
+	template<class Key, class Mapped> 
+		using Iterator = typename Map<Key, Mapped>::Iterator;
+
+	template<class Key, class Mapped> 
+		using ConstIterator = typename Map<Key, Mapped>::ConstIterator;
+
+	template<class Key, class Mapped> 
+		using ReverseIterator = typename Map<Key, Mapped>::ReverseIterator;
+/*
 			class ConstIterator{
 				public:
 					ConstIterator & operator ++ (){}
@@ -140,126 +297,7 @@ namespace cs540{
 				private:
 					ReverseIterator();
 			};
-			//Iterator methods
-			Iterator begin(){
-				Iterator i;
-				i.head = head;
-				i.cur = static_cast<Node *>(head->forward[0]);
-				i.first = i.cur->first;
-				i.second = i.cur->second;
-
-				return i;
-			}
-			Iterator end(){
-				Iterator i;
-				i.head = head;
-				i.cur = nullptr;
-				//i.first = NULL;
-				//i.second = NULL;
-
-				return i;
-			}
-			//TODO:
-			ConstIterator begin() const{}
-			ConstIterator end() const{}
-			//TODO:
-			ReverseIterator rbegin(){}
-			ReverseIterator rend(){}
-
-			BaseNode ** findNode(Key k){
-				static BaseNode * ret [MAX_HEIGHT];
-
-				Node * currNode = head;
-				for(int i = MAX_HEIGHT-1; i >= 0; i--)
-				{
-					while(currNode->forward[i] != NULL && (static_cast<Node*>(currNode->forward[i])->first < k))
-					{
-						currNode = static_cast<Node*>(currNode->forward[i]);
-					}
-					ret[i] = currNode;
-				}
-				return ret;
-			}	
-
-			std::pair<Iterator, bool> insert(const ValueType& t){
-				Node * newNode = new Node(t);
-
-				//Get the node right before we want to insert
-				BaseNode ** update = findNode(t.first);
-				
-				//TODO:
-				//Need to check if node with t.key already in or not
-				for(int i = newNode->height - 1; i>=0; i--)
-				{
-					newNode->forward[i] = static_cast<Node*>(update[i])->forward[i];
-					static_cast<Node*>(update[i])->forward[i] = newNode;
-				}
-				Iterator iter(head, newNode);
-				return std::make_pair(iter, true);	
-			}			
-
-			void erase(Iterator pos){}
-			void erase(const Key pos){}	
-			Iterator find(const Key & k){
-				Node * previous = static_cast<Node*>(findNode(k)[0]);
-				if(previous != NULL && previous->forward[0] != NULL)
-				{
-					Node * match = static_cast<Node *>(previous->forward[0]);
-					if(match->first == k){
-						return Iterator(head, match);
-					}else{
-						std::cerr << "Map::find got a non null before node, but key doesnt match" << std::endl;
-					}	
-				}else{
-					return end();
-				}
-
-			}
-			ConstIterator find(const Key & k) const{}
-
-
-
-
-
-	};
-	template<class Key, class Mapped>
-		using ValueType = typename Map<Key, Mapped>::ValueType;
-
-	template<class Key, class Mapped> 
-		using Iterator = typename Map<Key, Mapped>::Iterator;
-
-	template<class Key, class Mapped> 
-		using ConstIterator = typename Map<Key, Mapped>::ConstIterator;
-
-	template<class Key, class Mapped> 
-		using ReverseIterator = typename Map<Key, Mapped>::ReverseIterator;
-
-	template<class Key, class Mapped> 
-		Map<Key, Mapped>::Map(){
-			srand(time(NULL));
-			head = new Node(MAX_HEIGHT);
-		}
-
-	template<class Key, class Mapped> 
-		Map<Key, Mapped>::Map(const Map<Key, Mapped> & m){
-
-		}
-
-	template<class Key, class Mapped> 
-		Map<Key, Mapped>::~Map(){
-
-		}
-
-	/*
-		 template<class Key, class Mapped>
-		 bool operator==(Iterator<Key, Mapped> const & l, Iterator<Key, Mapped> const & r){
-		 return false;
-		 }	
-	 */	template<class Key, class Mapped>
-	inline bool operator!=(const Iterator<Key, Mapped> & l, const Iterator<Key, Mapped> & r){
-		return false;
-	}	
-
+*/
 
 }
 
