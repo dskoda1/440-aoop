@@ -1,5 +1,5 @@
 CXX= clang++
-CXXFLAGS= -std=c++11 -Wall -Wextra -pedantic -Wno-unused-parameter -Wno-return-type -g
+CXXFLAGS= -std=c++11 -Wall -Wextra -pedantic -ldl -g
 
 
 

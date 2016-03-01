@@ -5,25 +5,54 @@
 #include <vector>
 
 using namespace std;
-int main(int argc, char** argv){
+int main(){
 
 	cs540::Map<int, int> * m = new cs540::Map<int, int>();
 	srand(time(NULL));
-	vector<int> * vec = new vector<int>();
-	for(int i = 0; i <10; ++i){
+
+
+	for(int i = 0; i < 20; i++){
+
+			auto pair = make_pair((i%10), rand());
+			auto iter = m->insert(pair);
+			cout << iter.first << endl;
+			cout << iter.second << endl;
+
+
+	}
+
+
+
+
+
+
+	/*Vfor(int i = 0; i <1000; ++i){
 		auto pair = make_pair(i, rand());
-		auto iter = m->insert(pair);
-		vec->push_back(i);
-		//cout << iter.first << endl;	
-		//cout << --(m->end()) << endl;
-	}
+		m->insert(pair);
+	}*/
+		/*auto first = make_pair(1, rand());
+		auto second = make_pair(1, rand());
 
-
-
-	for(auto it = --(m->end()); it != m->begin(); --it){
+		auto one = m->insert(first);
+		auto two = m->insert(second);
+		
+		cout << two.second << endl;	
+		int i = 0;
+		int y = i++;
+		int z = i + y;
+		cout << z << endl;
+*/
+	/*
+	for(auto it =m->begin(); it != m->end(); it++){
 		auto val = *it;
-//		cout << val.first << ": " << val.second << endl;
+		cout << val.first << ": " << val.second << endl;
 	}
+
+	for(auto it =m->begin(); it != m->end(); ++it){
+		auto val = *it;
+		cout << val.first << ": " << val.second << endl;
+	}
+*/
 
 
 	/*
