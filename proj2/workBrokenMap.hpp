@@ -23,27 +23,20 @@ namespace cs540{
 			class BaseNode{
 				friend class Map;
 				public:
-				int height = 0;
-				BaseNode ** forward;
-				BaseNode * back;
-
-				BaseNode(){};
-				//Destructor
-				~BaseNode(){
-					delete [] forward;
-				}
 				BaseNode(int heightIn){
 					height = heightIn;
-					forward = new BaseNode * [heightIn];
+					forward = new Node * [heightIn];
 					for(int i = 0; i < heightIn; i++){
 						forward[i] = NULL;
 					}
 				}	
+				int height = 0;
+				Node ** forward;
 			};
 			/*	----------------------------------------------------
 			 *	Internal Node class
 			 */
-			class Node : public BaseNode{
+			class Node{
 				friend class Map;
 				public:
 
@@ -52,17 +45,16 @@ namespace cs540{
 				}
 				//Destructor
 				~Node(){
-					//delete [] forward;
+					delete [] forward;
 				}
 				//Explicit height constructor
-				/*Node(int heightIn){
+				Node(int heightIn){
 					height = heightIn;
-					forward = new BaseNode * [heightIn];
+					forward = new Node * [heightIn];
 					for(int i = 0; i < heightIn; i++){
-					forward[i] = 0;
+						forward[i] = NULL;
 					}
-					}
-				 */
+				}
 				//Explicit value constructor
 				Node(const ValueType & v) : data(v)//, first(v.first), second(v.second){
 				{
@@ -74,10 +66,7 @@ namespace cs540{
 					int i = 0;
 					for( ; (((double)rand() / RAND_MAX) >= 0.5) && i < MAX_HEIGHT; i++){}
 					height = i + 1;
-					this->forward = new BaseNode *[height];
-					for(int i = 0; i < height; i++){
-						this->forward[i] = 0;
-					}
+					forward = new Node *[height];
 					return;
 				}
 				//Data members 
@@ -85,89 +74,27 @@ namespace cs540{
 				ValueType data;
 				//Key first;
 				//Mapped second;
+				Node * back;
+				Node ** forward;
 			};
-			class ConstIterator{
-				friend class Map;
-				friend class Iterator;
-				public:
-				//Constructors
-				//Iterator(){}
-				//Copy constructor: implicit
-				//Assignment operator: implicit
-				//Destructor: implicit
-				//Explicit value constructor
-				ConstIterator(const Map * mapIn, BaseNode* curIn) : map(mapIn), cur(curIn){}	
-				//Preincrement
-				ConstIterator & operator ++ (){
-					if((cur->forward[0]) != NULL){
-						cur = static_cast<Node*>(cur->forward[0]);	
-					}else{
-						cur = nullptr;
-					}
-					return *(this);
-				}
-				//Postincrement
-				ConstIterator operator ++ (int){
-					ConstIterator old( * this);
-					++(*(this));
-					return old;	
-				}
-				//Predecrement
-				ConstIterator & operator -- (){
-					if(cur !=  NULL){
-						cur = (cur->back);
-					}else{
-						cur = map->tail;
-					}
-					return *(this);
-				}
-				//Postdecrement
-				ConstIterator operator -- (int){
-					ConstIterator old( * this);
-					--(*(this));
-					return old;
-				}
-				//Dereference
-				const ValueType & operator * () const{
-					return static_cast<Node*>(cur)->data;
-				}
-				//Special member access
-				const ValueType * operator -> (){
-					return &(static_cast<Node*>(cur)->data);
-				}
-				friend inline bool operator == (const ConstIterator & lhs, const ConstIterator & rhs){
-					return (lhs.cur == rhs.cur && lhs.map->head == rhs.map->head);
-				}			
-				friend inline bool operator != (const ConstIterator & lhs, const ConstIterator & rhs)
-				{
-					return !(lhs == rhs);
-				}
-
-				friend std::ostream& operator <<(std::ostream& os, const ConstIterator & it){
-					os << "Key: " << (*it).first << " Value: " << (*it).second;
-					return os;
-				}
-				private:
-				const Map * map;
-				BaseNode * cur;
-			};
-
 
 			class Iterator{
 				friend class Map;
-				friend class ConstIterator;
 				public:
 				//Constructors
-				//Iterator(){}
+				Iterator(){}
 				//Copy constructor: implicit
 				//Assignment operator: implicit
 				//Destructor: implicit
 				//Explicit value constructor
-				Iterator(Map * mapIn, BaseNode* curIn) : map(mapIn), cur(curIn){}	
+				Iterator(Map * mapIn, Node* curIn) : first(curIn->data.first), second(curIn->data.second), map(mapIn), cur(curIn){}	
+
 				//Preincrement
 				Iterator & operator ++ (){
 					if((cur->forward[0]) != NULL){
-						cur = static_cast<Node*>(cur->forward[0]);	
+						cur = (cur->forward[0]);	
+						first = cur->data.first;
+						second = cur->data.second;
 					}else{
 						cur = nullptr;
 					}
@@ -183,8 +110,13 @@ namespace cs540{
 				Iterator & operator -- (){
 					if(cur !=  NULL){
 						cur = (cur->back);
+						first = cur->data.first;
+						second = cur->data.second;
+
 					}else{
 						cur = map->tail;
+						first = cur->data.first;
+						second = cur->data.second;
 					}
 					return *(this);
 				}
@@ -196,44 +128,40 @@ namespace cs540{
 				}
 				//Dereference
 				ValueType & operator * () const{
-					return static_cast<Node*>(cur)->data;
+					return cur->data;
 				}
 				//Special member access
 				ValueType * operator -> (){
-					return &(static_cast<Node*>(cur)->data);
+					return &(cur->data);
 				}
 				//Equality operators
 				friend inline bool operator == (const Iterator & lhs, const Iterator & rhs){
 					return (lhs.cur == rhs.cur && lhs.map->head == rhs.map->head);
 				}
-				friend inline bool operator == (const Iterator & lhs, const ConstIterator & rhs){
-					return (lhs.cur == rhs.cur && lhs.map->head == rhs.map->head);
-
-				}
-				friend inline bool operator == (const ConstIterator & lhs, const Iterator & rhs){
-					return (lhs.cur == rhs.cur && lhs.map->head == rhs.map->head);
-				}
+				//friend inline bool operator == (const Iterator & lhs, const ConstIterator & rhs){}
+				//friend inline bool operator == (const ConstIterator & lhs, const Iterator & rhs){}
+				//friend inline bool operator == (const ConstIterator & lhs, const ConstIterator & rhs){}			
 				//Inequality operators	
 				friend inline bool operator != (const Iterator & lhs, const Iterator & rhs){
 					return !(lhs == rhs);
 				}
-				friend inline bool operator != (const Iterator & lhs, const ConstIterator & rhs){
-					return !(lhs == rhs);
-				}
-				friend inline bool operator != (const ConstIterator & lhs, const Iterator & rhs){
-					return !(lhs == rhs);
-				}
+				//friend inline bool operator != (const Iterator & lhs, const ConstIterator & rhs){}
+				//friend inline bool operator != (const ConstIterator & lhs, const Iterator & rhs){}
+				//friend inline bool operator != (const ConstIterator & lhs, const ConstIterator & rhs){}
+
 				friend std::ostream& operator <<(std::ostream& os, const Iterator & it){
-					os << "Key: " << (*it).first << " Value: " << (*it).second;
+					os << "Key: " << it.first << " Value: " << it.second;
 					return os;
 				}
+				Key first;
+				Mapped second;
 				private:
 				Map * map;
-				BaseNode * cur;
+				Node * cur;
 			};
 
 			//Data members that should be private eventually
-			BaseNode * head;
+			Node ** head;
 			Node * tail;
 			size_t length;
 
@@ -244,30 +172,23 @@ namespace cs540{
 			//Default Constructor
 			Map(){
 				srand(time(NULL));
-				head = new BaseNode(MAX_HEIGHT);
+				head = new Node * [MAX_HEIGHT];
 				tail = NULL;
 				length = 0;
 			}
 			//Copy Constructor
 			Map(const Map & m){
-				this->head = new BaseNode(MAX_HEIGHT);
-				for(auto it= m.begin(); it != m.end(); ++it){
-					this->insert(*it);
-				}
-				this->tail = m.tail;
-				this->length = m.length;
-
+				//TODO
+				this->head = m.head;
 			}
 			//Assignment operator
 			Map & operator = (const Map & m){
 				//TODO
-				assert(false);
 				this->head = m.head;
 			}
 			//Initializer list Constructor
 			Map(std::initializer_list<std::pair<const Key, Mapped>> l){
 				//TODO
-				assert(false);
 				for(auto it = l.begin(); it != l.end(); it++){
 					std::cout << (*it).first << ": " << (*it).second << std::endl;
 				}
@@ -276,10 +197,10 @@ namespace cs540{
 			//Destructor
 			~Map(){
 				//Has at least one element
-				BaseNode * curr = head->forward[0];
+				Node * curr = (head->forward[0]);
 				if(curr != NULL){
 					while(curr->forward[0] != NULL){
-						BaseNode * temp = curr->forward[0];
+						Node * temp = curr->forward[0];
 						delete curr;
 						curr = temp;
 					}
@@ -294,7 +215,6 @@ namespace cs540{
 				//TODO
 				Iterator ele = this->find(key);
 
-				assert(false);
 
 
 			}
@@ -307,36 +227,58 @@ namespace cs540{
 				return !length;
 			}
 			friend bool operator==(const Map &, const Map &){}
-			friend bool operator!=(const Map & l, const Map & r){}
+			friend bool operator!=(const Map &, const Map &){}
 			friend bool operator<(const Map &, const Map &){}
 
 			//Iterator methods
 			Iterator begin(){
-				return Iterator(this, head->forward[0]);
+				Iterator i;
+				i.map = this;
+				i.cur = (head->forward[0]);
+				i.first = i.cur->data.first;
+				i.second = i.cur->data.second;
+
+				return i;
 			}
 			Iterator end(){
-				return Iterator(this, NULL);
+				Iterator i;
+				i.map = this;
+				i.cur = NULL;
+				//i.cur->back = tail;
+				i.first = Key();
+				i.second = Mapped();
+
+				return i;
 			}
 			//TODO:
-			ConstIterator begin() const{
-				return ConstIterator(this, head->forward[0]);
-			}
-			ConstIterator end() const{
-				return ConstIterator(this, NULL);
-			}
+			//ConstIterator begin() const{}
+			//ConstIterator end() const{}
 			//TODO:
 			//ReverseIterator rbegin(){}
 			//ReverseIterator rend(){}
 
-			BaseNode ** findNode(Key k)const {
-				static BaseNode * ret [MAX_HEIGHT];
-
-				BaseNode * currNode = head;
-				for(int i = MAX_HEIGHT-1; i >= 0; i--)
+			Node ** findNode(Key k){
+				static Node * ret [MAX_HEIGHT];
+/*
+				Node * currNode = NULL;
+				for(int i = MAX_HEIGHT - 1; i >=0; --i){
+					if(head[i] != NULL){
+						currNode = head[i];
+						break;
+					}
+				}
+				
+				if(currNode == NULL){
+					std::cout << "inserting first into list" << std::endl;
+					return head;
+				}
+*/			
+				Node ** currNode = head;	
+				for(int i = MAX_HEIGHT-1; i >= 0; --i)
 				{
-					while(currNode->forward[i] != NULL && (static_cast<Node*>(currNode->forward[i])->data.first < k))
+					while(currNode[i] != NULL && ((currNode->forward[i])->data.first < k))
 					{
-						currNode = currNode->forward[i];
+						currNode = (currNode->forward[i]);
 					}
 					ret[i] = currNode;
 				}
@@ -344,24 +286,30 @@ namespace cs540{
 			}	
 
 			std::pair<Iterator, bool> insert(const ValueType& t){
+				Node * newNode = new Node(t);
 
 				//Get the node right before we want to insert
-				BaseNode ** update = findNode(t.first);
+				Node ** update = findNode(t.first);
 				//Check if pointing to a node that already exists with the key
-				if(update[0]->forward[0] != NULL && static_cast<Node*>(update[0]->forward[0])->data.first == t.first){
-					return std::make_pair(Iterator(this, static_cast<Node*>(update[0]->forward[0])), false);
+				if (update == head){
+					for(int i = newNode->height - 1; i>=0; i--)
+					{
+						newNode->forward[i] = update[i];
+						update[i] = newNode;
+					}
+				}else if(update[0]->forward[0] != NULL && update[0]->forward[0]->data.first == t.first){
+					return std::make_pair(Iterator(this, update[0]->forward[0]), false);
 				}
-				Node * newNode = new Node(t);
 
 				//If gotten to this point, continue on with regular insert
 				for(int i = newNode->height - 1; i>=0; i--)
 				{
-					newNode->forward[i] = update[i]->forward[i];
-					update[i]->forward[i] = newNode;
+					newNode->forward[i] = (update[i])->forward[i];
+					(update[i])->forward[i] = newNode;
 				}
 
 				//Update the back ref
-				newNode->back = static_cast<Node*>(update[0]);
+				newNode->back = update[0];
 
 				//Update the maps tail and the length
 				if(tail == NULL){
@@ -378,21 +326,18 @@ namespace cs540{
 				//TODO
 				//this->delete(pos.first)
 				Iterator i = pos;
-				assert(false);
-
 			}
 			void erase(const Key key){
 				//TODO
-				assert(false);
 				//this->delete(key)
 				Key k = key;
 			}	
 			Iterator find(const Key & k){
-				Node * previous = static_cast<Node*>(findNode(k)[0]);
+				Node * previous = (findNode(k)[0]);
 				if(previous == tail) return end();
 				if(previous != NULL && previous->forward[0] != NULL)
 				{
-					Node * match = static_cast<Node*>(previous->forward[0]);
+					Node * match = previous->forward[0];
 					if(match->data.first == k){
 						return Iterator(this, match);
 					}else{
@@ -403,29 +348,49 @@ namespace cs540{
 				}
 
 			}
-			ConstIterator find(const Key & k) const{
-				Node * previous = static_cast<Node*>(findNode(k)[0]);
-				if(previous == tail) return end();
-				if(previous != NULL && previous->forward[0] != NULL)
-				{
-					Node * match = static_cast<Node*>(previous->forward[0]);
-					if(match->data.first == k){
-						return ConstIterator(this, match);
-					}else{
-						return end();	
-					}	
-				}else{
-					return end();
-				}
-
-
-			}
+			//ConstIterator find(const Key & k) const{}
 
 
 
 
 
 			};
+			/* Old stuff
+				 template<class Key, class Mapped>
+				 using ValueType = typename Map<Key, Mapped>::ValueType;
+
+				 template<class Key, class Mapped> 
+				 using Iterator = typename Map<Key, Mapped>::Iterator;
+
+				 template<class Key, class Mapped> 
+				 using ConstIterator = typename Map<Key, Mapped>::ConstIterator;
+
+				 template<class Key, class Mapped> 
+				 using ReverseIterator = typename Map<Key, Mapped>::ReverseIterator;
+
+				 class ConstIterator{
+				 public:
+				 ConstIterator & operator ++ (){}
+				 ConstIterator operator ++ (int i){}
+				 ConstIterator & operator -- (){}
+				 ConstIterator operator -- (int i){}
+
+			//This line below is what triggers the linker error
+			const ValueType & operator * () const{}
+			const ValueType * operator -> () const{}
+			ConstIterator & operator = (const ConstIterator & i){}
+			//Node_base * cur;
+			bool &operator == (const ConstIterator & rhs){}			
+			bool &operator !=(const ConstIterator & rhs){}
+			private:
+			};
+
+			class ReverseIterator{
+			public:
+			private:
+			ReverseIterator();
+			};
+			 */
 
 	}
 
