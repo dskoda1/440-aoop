@@ -31,26 +31,29 @@ int main(){
 	m.insert(make_pair(p1, 1));
 	m.insert(make_pair(p2, 2));
 	m.insert(make_pair(p3, 3));
-	m.insert(make_pair(p4, 4));
+	auto davePair = make_pair(p4, 4);
+	m.insert(davePair);
+
+/*	for(auto it = m.begin(); it != m.end(); ++it){
+		cout << (*it).first.name << endl;
+	}
 
 	auto it1 = m.begin();
 	auto it2 = m.end();
 	it1++; // Second node now.
 	it1++; // Third node now.
 	it2--; // Fourth node now.
-	cout << (*it2).second << endl;	
+	cout << "Expecting john, it1: " << (*it1).first.name << endl;	
+	cout << "Expecting mary, it2: " << (*it2).first.name << endl;	
 	it2--; // Third node now.
-	cout << (*it2).second << endl;	
+	cout << "Expecting john, it2: " << (*it2).first.name << endl;	
 	assert(it1 == it2);
 	it2--; // Second node now.
-	cout << (*it2).second << endl;	
+	cout << "Expecting jane, it2: " << (*it2).first.name << endl;	
 	it2--; // First node now.
-	cout << (*it2).second << endl;	
-	if(m.begin() == it2){
-		cout << "equal" << endl;
-	}
+	cout << "Expecting dave, it2: " << (*it2).first.name << endl;	
 	assert(m.begin() == it2);
-	/*for(int i = 0; i < 10; i++){
+for(int i = 0; i < 10; i++){
 
 		auto pair = make_pair(i, rand());
 		auto iter = m.insert(pair);

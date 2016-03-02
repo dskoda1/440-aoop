@@ -352,16 +352,20 @@ namespace cs540{
 					return std::make_pair(Iterator(this, static_cast<Node*>(update[0]->forward[0])), false);
 				}
 				Node * newNode = new Node(t);
-
+		
 				//If gotten to this point, continue on with regular insert
 				for(int i = newNode->height - 1; i>=0; i--)
 				{
 					newNode->forward[i] = update[i]->forward[i];
+				
+					//Only at bottom level update back pointer
+					if(i == 0 && update[i]->forward[i] != NULL){
+						update[i]->forward[i]->back = newNode;
+					}
 					update[i]->forward[i] = newNode;
 				}
-
 				//Update the back ref
-				newNode->back = static_cast<Node*>(update[0]);
+				newNode->back = update[0];
 
 				//Update the maps tail and the length
 				if(tail == NULL){
