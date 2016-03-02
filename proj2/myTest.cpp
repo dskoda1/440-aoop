@@ -40,10 +40,11 @@ int main(){
 	for(auto it = m.begin(); it != m.end(); ++it){
 		cout << (*it).first.name << endl;
 	}
-	cout << "erasing" << endl;
-	m.erase(p3);
-	for(auto it = m.begin(); it != m.end(); ++it){
+
+	for(auto it = m.rbegin(); it != m.rend(); ++it){
 		cout << (*it).first.name << endl;
+
+
 	}
 
 
