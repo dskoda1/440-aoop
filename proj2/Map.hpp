@@ -352,12 +352,12 @@ namespace cs540{
 					return std::make_pair(Iterator(this, static_cast<Node*>(update[0]->forward[0])), false);
 				}
 				Node * newNode = new Node(t);
-		
+
 				//If gotten to this point, continue on with regular insert
 				for(int i = newNode->height - 1; i>=0; i--)
 				{
 					newNode->forward[i] = update[i]->forward[i];
-				
+
 					//Only at bottom level update back pointer
 					if(i == 0 && update[i]->forward[i] != NULL){
 						update[i]->forward[i]->back = newNode;
@@ -376,20 +376,40 @@ namespace cs540{
 				length++;
 
 				return std::make_pair(Iterator(this, newNode), true);	
-			}			
+			}		
+			void deleteKey(Key k){
+				BaseNode ** update = findNode(k);
+
+				//Ensure update[0]->forward[0] is pointing the the node with key marked for delete
+				if(update[0]->forward[0] != NULL && !(static_cast<Node*>(update[0]->forward[0])->data.first == k)){
+					throw std::out_of_range("No key found");
+				}
+				//Save a pointer to this node first
+				Node * del = static_cast<Node*>(update[0]->forward[0]);
+				//Go through each of the nodes pointer and assign them backwards
+				for(int i = del->height - 1; i>=0; i--){
+					update[i]->forward[i] = del->forward[i];
+				}	
+				//Update back pointer
+				//Might need null check
+
+				if(tail == del){
+					tail = static_cast<Node*>(del->back);
+				}else{
+					update[0]->forward[0]->back = del->back;
+
+				}
+				delete del;
+				length--;
+				return;
+
+			}	
 
 			void erase(Iterator pos){
-				//TODO
-				//this->delete(pos.first)
-				Iterator i = pos;
-				assert(false);
-
+				this->deleteKey((*pos).first);
 			}
 			void erase(const Key key){
-				//TODO
-				assert(false);
-				//this->delete(key)
-				Key k = key;
+				this->deleteKey(key);
 			}	
 			Iterator find(const Key & k){
 				Node * previous = static_cast<Node*>(findNode(k)[0]);

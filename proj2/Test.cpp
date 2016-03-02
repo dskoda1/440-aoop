@@ -1,99 +1,122 @@
-#include <iostream>
-#include <string.h>
-#include <assert.h>
 #include "Map.hpp"
-#include <vector>
 
-using namespace std;
-struct Person {
-	friend bool operator<(const Person &p1, const Person &p2) {
-		return p1.name < p2.name;
-	}
-	friend bool operator==(const Person &p1, const Person &p2) {
-		return p1.name == p2.name;
-	}
-	Person(const char *n) : name(n) {}
-	void print() const {
-		printf("Name: %s\n", name.c_str());
-	}
-	const std::string name;
-	Person &operator=(const Person &) = delete;
+#include <cassert>
+
+// basically an int wrapper
+class MyKeyType {
+    private:
+        int val;
+
+    public:
+        //not default constructable, not copy assignable, not move assignable
+        MyKeyType() = delete;
+        MyKeyType& operator=(const MyKeyType&) = delete;
+        MyKeyType& operator=(MyKeyType&&) = delete;
+
+        // copy constructable and move assignable
+        MyKeyType(MyKeyType&&) = default;
+        MyKeyType(const MyKeyType&) = default;
+        ~MyKeyType() = default;
+
+        MyKeyType(int i) : val(i) { }
+
+        bool operator<(const MyKeyType& other) const { 
+            return this->val < other.val;
+        }
+
+        bool operator==(const MyKeyType &other) const {
+            return this->val == other.val;
+        }
 };
 
-int main(){
+// same as keytype except no operator<
+class MyValueType {
+    private:
+        int val;
 
-	cs540::Map<const Person, int> m; 
-	srand(time(NULL));
-	Person p1("Jane");
-	Person p2("John");
-	Person p3("Mary");
-	Person p4("Dave");
-	m.insert(make_pair(p1, 1));
-	m.insert(make_pair(p2, 2));
-	m.insert(make_pair(p3, 3));
-	auto davePair = make_pair(p4, 4);
-	m.insert(davePair);
+    public:
+        //not default constructable, not copy assignable, not move assignable
+        MyValueType() = delete;
+        MyValueType& operator=(const MyValueType&) = delete;
+        MyValueType& operator=(MyValueType&&) = delete;
 
-/*	for(auto it = m.begin(); it != m.end(); ++it){
-		cout << (*it).first.name << endl;
-	}
+        // copy constructable and move assignable
+        MyValueType(MyValueType&&) = default;
+        MyValueType(const MyValueType&) = default;
+        ~MyValueType() = default;
 
-	auto it1 = m.begin();
-	auto it2 = m.end();
-	it1++; // Second node now.
-	it1++; // Third node now.
-	it2--; // Fourth node now.
-	cout << "Expecting john, it1: " << (*it1).first.name << endl;	
-	cout << "Expecting mary, it2: " << (*it2).first.name << endl;	
-	it2--; // Third node now.
-	cout << "Expecting john, it2: " << (*it2).first.name << endl;	
-	assert(it1 == it2);
-	it2--; // Second node now.
-	cout << "Expecting jane, it2: " << (*it2).first.name << endl;	
-	it2--; // First node now.
-	cout << "Expecting dave, it2: " << (*it2).first.name << endl;	
-	assert(m.begin() == it2);
-for(int i = 0; i < 10; i++){
+        MyValueType(int i) : val(i) { }
 
-		auto pair = make_pair(i, rand());
-		auto iter = m.insert(pair);
-		cout << iter.first << endl;
-		}
-		const cs540::Map<const int, int> copy(m);	
-		auto it = copy.find(3);
-		cout << it << endl;
-		for(int i = 0; i <10000; ++i){
-		auto pair = make_pair(i, rand());
-		m->insert(pair);
-		}
-		auto first = make_pair(1, rand());
-		auto second = make_pair(1, rand());
+        bool operator==(const MyValueType &other) const {
+            return this->val == other.val;
+        }
+};
 
-		auto one = m->insert(first);
-		auto two = m->insert(second);
+class MyDefaultConstructible {
+
+        friend bool operator<(const MyDefaultConstructible &o1, const MyDefaultConstructible &o2) {
+            return o1.val < o2.val;
+        }
+
+    private:
+        int val = 0;
+
+    public:
+        // not copy assignable, not move assignable
+        MyDefaultConstructible& operator=(const MyDefaultConstructible&) = delete;
+        MyDefaultConstructible& operator=(MyDefaultConstructible&&) = delete;
+
+        // default constructable, copy constructable and move assignable
+        MyDefaultConstructible() = default;
+        MyDefaultConstructible(MyDefaultConstructible&&) = default;
+        MyDefaultConstructible(const MyDefaultConstructible&) = default;
+        ~MyDefaultConstructible() = default;
+
+        MyDefaultConstructible(int i) : val(i) { }
+
+        bool operator==(const MyDefaultConstructible &other) const {
+            return this->val == other.val;
+        }
+};
 
 
+class MyAssignable {
+    private:
+        int val = 0;
 
-		for(auto it =m->begin(); it != m->end(); it++){
-		auto val = *it;
-		cout << val.first << ": " << val.second << endl;
-		}
+    public:
+        MyAssignable() = default;
+        MyAssignable(int i) : val(i) { }
+        bool operator==(const MyAssignable &other) const {
+            return this->val == other.val;
+        }
+};
 
-		for(auto it =m->begin(); it != m->end(); ++it){
-		auto val = *it;
-		cout << val.first << ": " << val.second << endl;
-		}
+// manual instantiation, instantiates every member function instead of 
+// just the ones called
+template class cs540::Map<MyKeyType, MyDefaultConstructible>;
 
 
+int main() {
+    cs540::Map<MyKeyType, MyValueType> m{{3, 5}};
+    m.insert({{2}, {3}});
+    m.insert({{1}, {3}});
+    m.insert({{5}, {3}});
+    m.insert({{7}, {3}});
+    m.at(2);
+    auto iter = m.find(2);
+    m.erase(iter);
+    auto m_copy = m;
+    assert(m_copy == m);
 
+    cs540::Map<MyKeyType, MyDefaultConstructible> m2{{8, 9}};
+    m2[10]; // should default construct these values
+    m2[15];
 
-		auto it = m->find(4800);
-		if(it != m->end()){
-		cout << it.first << ", " << it.second << endl;
-		}else{
-		cout << "Returned end" << endl;
-		}
-	 */
+    cs540::Map<MyKeyType, MyAssignable> m3{{6, 7}};
+    m3[20] = {5}; // move assign
+    MyAssignable ma{1};
+    m3[10] = ma; //copy assign
 
-	return 0;
+    return 0;
 }
