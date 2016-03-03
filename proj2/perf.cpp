@@ -11,7 +11,7 @@
 
 //Enables iteration test on a map larger than the memory available to the remote cluster
 //WARNING: This will be VERY slow.
-#define DO_BIG_ITERATION_TEST 1
+#define DO_BIG_ITERATION_TEST 0
 
 namespace cs540 {
   template <typename K, typename V>

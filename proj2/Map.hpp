@@ -435,20 +435,7 @@ namespace cs540{
 		}
 
 		Mapped & operator [] (const Key & key){
-			BaseNode ** update = this->findNode(key);
-			//Two cases: Key exists, or doesnt
-			if(update[0]->forward[0] != NULL && static_cast<Node*>(update[0]->forward[0])->data.first == key){
-				//Key exists
-				Node * node = static_cast<Node*>(update[0]->forward[0]);
-				return node->data.second;
-
-			}else{
-				//Key doesnt exist
-				//TODO: look at performance of this
-				ValueType v = std::make_pair(key, Mapped());
-				auto it = this->insert(v);
-				return it.first->second;			
-			}
+			return this->insert(std::make_pair(key, Mapped{})).first->second;
 		}
 
 		std::pair<Iterator, bool> insert(const ValueType& t){
