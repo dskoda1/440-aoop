@@ -150,7 +150,7 @@ namespace cs540{
 			BaseNode * cur;
 		};
 
-
+			public:
 		class Iterator{
 			friend class Map;
 			friend class ConstIterator;
@@ -294,10 +294,6 @@ namespace cs540{
 			BaseNode * cur;
 		};
 
-		//Data members that should be private eventually
-		BaseNode * head;
-		Node * tail;
-		size_t length;
 
 		/*	--------------------------------------------------------
 		 *	Map specific functions 
@@ -489,7 +485,6 @@ namespace cs540{
 
 			return std::make_pair(Iterator(this, newNode), true);	
 		}		
-		//TODO test this
 		template <typename IT_T>
 			void insert(IT_T range_beg, IT_T range_end){
 				for(auto it = range_beg; it != range_end; ++it){
@@ -526,12 +521,36 @@ namespace cs540{
 		bool operator!=(const Map & r){
 			return !((*this) == r);
 		}
-		//TODO
-		friend bool operator<(const Map &, const Map &){
+		bool operator<(const Map & rhs){
+			auto lit = this->begin();
+			auto rit = rhs.begin();
 
+			for(;lit != this->end() && rit != rhs.end(); ++lit, ++rit){
+				if((*lit) == (*rit)){
+					continue;
+				}else if((*lit) < (*rit)){
+					return true;	
+				}else{
+					return false;
+				}
+			}
+
+			//Gotten to this point so either one is shorter or theyre all equal
+			if(lit == this->end() && rit != rhs.end()){
+				return true;
+			}else if(lit != this->end() && rit == rhs.end()){
+				return false;
+			}else{
+				return false;
+			}
 		}
 
 			private:
+		//Data members that should be private eventually
+		BaseNode * head;
+		Node * tail;
+		size_t length;
+
 		BaseNode ** findNode(Key k)const {
 			static BaseNode * ret [MAX_HEIGHT];
 
