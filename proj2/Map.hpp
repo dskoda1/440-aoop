@@ -16,9 +16,7 @@ namespace cs540{
 	template <class Key, class Mapped> class Map{
 		//Access key with .first, value with .second
 		typedef std::pair<Key, Mapped> ValueType;
-
 		private:
-
 		/*	----------------------------------------------------
 		 *	Internal Node class
 		 */
@@ -53,14 +51,6 @@ namespace cs540{
 				//delete [] forward;
 			}
 			//Explicit height constructor
-			/*Node(int heightIn){
-				height = heightIn;
-				forward = new BaseNode * [heightIn];
-				for(int i = 0; i < heightIn; i++){
-				forward[i] = 0;
-				}
-				}
-			 */
 			//Explicit value constructor
 			Node(const ValueType & v) : data(v)//, first(v.first), second(v.second){
 			{
@@ -89,11 +79,6 @@ namespace cs540{
 			friend class Iterator;
 			public:
 			//Constructors
-			//Iterator(){}
-			//Copy constructor: implicit
-			//Assignment operator: implicit
-			//Destructor: implicit
-			//Explicit value constructor
 			ConstIterator(const Map * mapIn, BaseNode* curIn) : map(mapIn), cur(curIn){}	
 			//Preincrement
 			ConstIterator & operator ++ (){
@@ -156,10 +141,6 @@ namespace cs540{
 			friend class ConstIterator;
 			public:
 			//Constructors
-			//Iterator(){}
-			//Copy constructor: implicit
-			//Assignment operator: implicit
-			//Destructor: implicit
 			//Explicit value constructor
 			Iterator(Map * mapIn, BaseNode* curIn) : map(mapIn), cur(curIn){}	
 			//Preincrement
@@ -233,10 +214,6 @@ namespace cs540{
 			friend class Map;
 			public:
 			//Constructors
-			//Iterator(){}
-			//Copy constructor: implicit
-			//Assignment operator: implicit
-			//Destructor: implicit
 			//Explicit value constructor
 			ReverseIterator(Map * mapIn, BaseNode* curIn) : map(mapIn), cur(curIn){}	
 			//Preincrement
@@ -293,8 +270,6 @@ namespace cs540{
 			Map * map;
 			BaseNode * cur;
 		};
-
-
 		/*	--------------------------------------------------------
 		 *	Map specific functions 
 		 */
@@ -304,22 +279,30 @@ namespace cs540{
 			head = new BaseNode(MAX_HEIGHT);
 			tail = NULL;
 			length = 0;
+			lastSearch = nullptr;
 		}
 		//Copy Constructor
 		Map(const Map & m){
 			this->head = new BaseNode(MAX_HEIGHT);
 			this->tail = NULL;
 			this->length = 0;
+			this->lastSearch = nullptr;
 			for(auto it= m.begin(); it != m.end(); ++it){
 				this->insert(*it);
 			}
-
+			
 		}
+	
 		//Assignment operator
 		Map & operator = (const Map & m){
+			if(&m == this){
+				return *this;
+			}	
+			//if(this->head != NULL) delete this->head;
 			this->head = new BaseNode(MAX_HEIGHT);
 			this->tail = NULL;
 			this->length = 0;
+			this->lastSearch = nullptr;
 			for(auto it = m.begin(); it != m.end(); ++it){
 				this->insert(*it);
 			}
@@ -331,11 +314,10 @@ namespace cs540{
 			this->head = new BaseNode(MAX_HEIGHT);
 			this->tail = NULL;
 			this->length = 0;
+			this->lastSearch = nullptr;
 			for(auto it = l.begin(); it != l.end(); it++){
 				this->insert(*it);			
-
 			}
-
 		}
 		//Destructor
 		~Map(){
@@ -347,19 +329,16 @@ namespace cs540{
 					delete curr;
 					curr = temp;
 				}
-
 				delete curr;
 			}
 			delete head;
 		}
-
 		size_t size() const{
 			return length;
 		}
 		bool empty() const{
 			return !length;
 		}
-
 		//Iterator methods
 		Iterator begin(){
 			return Iterator(this, head->forward[0]);
@@ -379,8 +358,35 @@ namespace cs540{
 		ReverseIterator rend(){
 			return ReverseIterator(this, head);
 		}
-
 		Iterator find(const Key & k){
+			if(lastSearch){
+				//Check if last search satisfies it
+				if(lastSearch->data.first == k){
+					return Iterator(this, lastSearch);
+				}else if(lastSearch->back && static_cast<Node*>(lastSearch->back)->data.first == k){
+					lastSearch = static_cast<Node*>(lastSearch->back);
+					return Iterator(this, lastSearch);
+				}else if(lastSearch->forward[0] && static_cast<Node*>(lastSearch->forward[0])->data.first == k){
+					lastSearch = static_cast<Node*>(lastSearch->forward[0]);
+				}
+			}
+
+			Node * previous = static_cast<Node*>(findNode(k)[0]);
+			if(previous == tail) return end();
+			if(previous != NULL && previous->forward[0] != NULL)
+			{
+				Node * match = static_cast<Node*>(previous->forward[0]);
+				if(match->data.first == k){
+					lastSearch = match;
+					return Iterator(this, match);
+				}else{
+					return end();	
+				}	
+			}else{
+				return end();
+			}
+		}
+		Iterator slowFind(const Key & k){
 			Node * previous = static_cast<Node*>(findNode(k)[0]);
 			if(previous == tail) return end();
 			if(previous != NULL && previous->forward[0] != NULL)
@@ -394,7 +400,6 @@ namespace cs540{
 			}else{
 				return end();
 			}
-
 		}
 		ConstIterator find(const Key & k) const{
 			Node * previous = static_cast<Node*>(findNode(k)[0]);
@@ -411,18 +416,14 @@ namespace cs540{
 				return end();
 			}
 		}
-
 		Mapped & at(const Key & k){
-
 			auto it = this->find(k);
 			if(it == this->end()){
 				throw std::out_of_range("Key not found in call to Map::at");
 			}else{
 				return it->second;
 			}
-
 		}
-
 		const Mapped & at(const Key & k) const {
 			auto it = this->find(k);
 			if(it == this->end()){
@@ -430,16 +431,11 @@ namespace cs540{
 			}else{
 				return it->second;
 			}
-
-
 		}
-
 		Mapped & operator [] (const Key & key){
 			return this->insert(std::make_pair(key, Mapped{})).first->second;
 		}
-
 		std::pair<Iterator, bool> insert(const ValueType& t){
-
 			//Get the node right before we want to insert
 			BaseNode ** update = findNode(t.first);
 			//Check if pointing to a node that already exists with the key
@@ -447,12 +443,10 @@ namespace cs540{
 				return std::make_pair(Iterator(this, static_cast<Node*>(update[0]->forward[0])), false);
 			}
 			Node * newNode = new Node(t);
-
 			//If gotten to this point, continue on with regular insert
 			for(int i = newNode->height - 1; i>=0; i--)
 			{
 				newNode->forward[i] = update[i]->forward[i];
-
 				//Only at bottom level update back pointer
 				if(i == 0 && update[i]->forward[i] != NULL){
 					update[i]->forward[i]->back = newNode;
@@ -469,7 +463,6 @@ namespace cs540{
 				tail = newNode;
 			}
 			length++;
-
 			return std::make_pair(Iterator(this, newNode), true);	
 		}		
 		template <typename IT_T>
@@ -484,13 +477,11 @@ namespace cs540{
 		void erase(const Key key){
 			this->deleteKey(key);
 		}	
-
 		void clear (){
 			while(begin() != end()){
 				erase(begin());
 			}
 		}
-
 		bool operator==(const Map & r){
 			if(this->length == r.length){
 				auto it = this->begin();
@@ -521,7 +512,6 @@ namespace cs540{
 					return false;
 				}
 			}
-
 			//Gotten to this point so either one is shorter or theyre all equal
 			if(lit == this->end() && rit != rhs.end()){
 				return true;
@@ -531,16 +521,15 @@ namespace cs540{
 				return false;
 			}
 		}
-
 			private:
 		//Data members that should be private eventually
+
+		Node * lastSearch;
 		BaseNode * head;
 		Node * tail;
 		size_t length;
-
 		BaseNode ** findNode(Key k)const {
 			static BaseNode * ret [MAX_HEIGHT];
-
 			BaseNode * currNode = head;
 			for(int i = MAX_HEIGHT-1; i >= 0; i--)
 			{
@@ -552,10 +541,8 @@ namespace cs540{
 			}
 			return ret;
 		}	
-
 		void deleteKey(Key k){
 			BaseNode ** update = findNode(k);
-
 			//Ensure update[0]->forward[0] is pointing the the node with key marked for delete
 			if(update[0]->forward[0] != NULL && !(static_cast<Node*>(update[0]->forward[0])->data.first == k)){
 				throw std::out_of_range("No key found");
@@ -568,7 +555,6 @@ namespace cs540{
 			}	
 			//Update back pointer
 			//Might need null check
-
 			if(tail == del){
 				tail = static_cast<Node*>(del->back);
 			}else if(update[0]->forward[0] != NULL){

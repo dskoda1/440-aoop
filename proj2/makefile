@@ -1,5 +1,6 @@
 CXX= clang++
-CXXFLAGS= -std=c++11 -O3 -Wall -Wextra -pedantic -ldl -g
+CXXFLAGS= -std=c++11 -O3 -Wall -Wextra -pedantic -g
+
 
 all: Test
 

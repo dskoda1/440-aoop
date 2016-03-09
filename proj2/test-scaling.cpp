@@ -452,6 +452,36 @@ void iterationTest(int count) {
 }
 
 template <typename T>
+void localityTest(int count){
+	using namespace std::chrono;
+	T m = ascendingInsert<T>(count, false);
+	TimePoint start, end;
+
+	start = system_clock::now();
+	int index = 4 * (count/5);
+	for(int j = 0; j < 10; ++j){
+		for(int i = 0; i < count; ++i){
+			m.find(index + j);
+		}
+	}
+	end = system_clock::now();
+	Milli elapsed = end - start;
+	std::cout << "Locality test on map of size " << count << " took " << elapsed.count() << " milliseconds, and time per find was " << elapsed.count()/double(count)*1e6 << " nanoseconds" << std::endl; 
+	
+
+	start = system_clock::now();
+	for(int j = 0; j < 10; ++j){
+		for(int i = 0; i < count; ++i){
+			m.slowFind(index + j);
+		}
+	}
+	end = system_clock::now();
+	elapsed = end - start;
+	std::cout << "Locality test on ***slow*** map of size " << count << " took " << elapsed.count() << " milliseconds, and time per find was " << elapsed.count()/double(count)*1e6 << " nanoseconds" << std::endl; 
+
+ 
+}
+template <typename T>
 void copyTest(int count) {
   using namespace std::chrono;
   T m = ascendingInsert<T>(count,false);
@@ -578,8 +608,8 @@ int main() {
     iterationTest<cs540::Map<int,int>>(1280000);
     iterationTest<cs540::Map<int,int>>(2560000);
     iterationTest<cs540::Map<int,int>>(5120000);
-#if DO_BIG_ITERATION_TEST
     //Optional test. This is more ram than the remote machines have and will likely take a long time to run.
+#if DO_BIG_ITERATION_TEST
     iterationTest<cs540::Map<int,int>>(600000000);
 #endif
     dispTestName("Iteration test", w);
@@ -592,9 +622,9 @@ int main() {
     iterationTest<cs540::StdMapWrapper<int,int>>(640000);
     iterationTest<cs540::StdMapWrapper<int,int>>(1280000);
     iterationTest<cs540::StdMapWrapper<int,int>>(5120000);
+  	//Optional test. This is more ram than the remote machines have and will likely take a long time to run.
 #if DO_BIG_ITERATION_TEST
-  //Optional test. This is more ram than the remote machines have and will likely take a long time to run.
-  iterationTest<cs540::Map<int,int>>(600000000);
+	  iterationTest<cs540::Map<int,int>>(600000000);
 #endif
   }
   
@@ -611,7 +641,12 @@ int main() {
     copyTest<cs540::StdMapWrapper<int,int>>(1000000);
     copyTest<cs540::StdMapWrapper<int,int>>(10000000);
   }
-  
-  //Add your own indexibility scaling test here
+	{
+		//Locality testing
+		dispTestName("Locality test", m);
+		//This test runs only on my map, because it also calls a 'slowFind' method
+		//Which is find without the benefit of locality, to show the difference.
+		localityTest<cs540::Map<int, int>>(100000);
+	}  
 }
 
