@@ -20,3 +20,10 @@ to all of the other scaling tests. I have two find(key) functions for my map;
 find, and slowFind. The former demonstrates locality in searches, and my test
 case demonstrates how much faster the find function than the latter which
 does not use locality for finds.
+
+TO RUN:
+I have included the file which has my locality test called my-test-scaling.cpp.
+My makefile is configured to compile any file called Test.cpp with my Map.hpp.
+So change the name of the test file youd like to compile with to Test.cpp and 
+call make on it.
+
