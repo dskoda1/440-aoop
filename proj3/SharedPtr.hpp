@@ -4,28 +4,72 @@
 //Includes
 #include <cstddef>
 #include <iostream>
-
+#include <assert.h>
 namespace cs540{
 
   template <typename T> class SharedPtr{
     private:
 
     public:
+
+      class refData{
+
+        friend class SharedPtr;
+        public:
+        refData(T *dataIn, int countIn=0): data{dataIn}, refCount{countIn}{}
+        int getRefCount(){ return refCount; };
+
+        /*refData & operator ++ (){
+          ++refCount;
+          return *(this);
+          }
+          refData operator ++(int){
+          refData old( * this);
+          ++refCount;
+          return old;
+          }*/
+        private:
+        T * data;
+        int refCount;
+
+      };
+
+      refData * refCounter;
+
+
+
+
       /* Constructor */
-      SharedPtr(){}
+      SharedPtr(){
+        std::cout << "in the default constructor" << std::endl; 
+        refCounter = nullptr; 
+      }
 
       /* Explicit Constructor */
       template <typename U> 
-        explicit SharedPtr(U *){}
+        explicit SharedPtr(U * dataIn){
+          std::cout << "in the explicit constructor" << std::endl;
+          refCounter = new refData(dataIn, 1);
+        }
 
       /*
        * Copy Constructor
        * Increment the count by one.
        */
-      SharedPtr(const SharedPtr &p){}
+      SharedPtr(const SharedPtr &p){
+        std::cout << "in the copy constructor" << std::endl;
+        if(p.refCounter != NULL){
+          refCounter = p.refCounter;
+          ++refCounter->refCount;
+        }else{
+          refCounter = nullptr;
+        }
+      }
 
       template <typename U>
-        SharedPtr(const SharedPtr<U> & p){}
+        SharedPtr(const SharedPtr<U> & p){
+          assert(false);
+        }
 
       /*
        * Move constructor
@@ -72,11 +116,14 @@ namespace cs540{
        * Observers 
        *********************/
 
-      T * get() const {}
+      T * get() const {
+        return refCounter->data;
+      }
 
-      T & operator * () {}
+      T & operator * () const {
+      }
 
-      T * operator -> () {}
+      T * operator -> () const {}
 
       explicit operator bool() const{}
 
