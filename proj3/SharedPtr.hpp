@@ -10,66 +10,70 @@ namespace cs540{
   template <typename T> class SharedPtr{
     private:
 
-    public:
-
-      class refData{
-
-        friend class SharedPtr;
+      class refDataA{
         public:
-        refData(T *dataIn, int countIn=0): data{dataIn}, refCount{countIn}{}
-        int getRefCount(){ return refCount; };
-
-        /*refData & operator ++ (){
-          ++refCount;
-          return *(this);
-          }
-          refData operator ++(int){
-          refData old( * this);
-          ++refCount;
-          return old;
-          }*/
-        private:
-        T * data;
         int refCount;
+        refDataA() : refCount{1}{}
+        virtual void destroy() = 0;
+        virtual ~refDataA(){}
 
       };
 
-      refData * refCounter;
+      template <typename U>
+      class refData : public refDataA{
+        public:
+          U * data;
+          //del d;
+          //refData(U * dataIn, del dIn) : data{dataIn}, d{dIn} {}
+          refData(U * dataIn) : data{dataIn} {}
+          virtual void destroy(){
+            delete data;
+          }
+          ~refData(){}
+      };
+      /*
+      template<class U>
+      struct virtualDtor{
+        void operator()(U * data) const {
+          delete data;
+        }
+      };*/
 
+    public:
+
+      refDataA * refCounter;
+      T * data;
 
 
 
       /* Constructor */
-      SharedPtr(){
+      SharedPtr() : refCounter{}, data{}{
         std::cout << "in the default constructor" << std::endl; 
-        refCounter = nullptr; 
       }
 
       /* Explicit Constructor */
       template <typename U> 
-        explicit SharedPtr(U * dataIn){
+        explicit SharedPtr(U * dataIn) : 
+          refCounter{new refData<U>(dataIn)},
+          data{dataIn} 
+        {
           std::cout << "in the explicit constructor" << std::endl;
-          refCounter = new refData(dataIn, 1);
         }
 
       /*
        * Copy Constructor
        * Increment the count by one.
        */
-      SharedPtr(const SharedPtr &p){
+      SharedPtr(const SharedPtr &p) : refCounter{p.refCounter}, data{p.data}{
         std::cout << "in the copy constructor" << std::endl;
-        if(p.refCounter != NULL){
-          refCounter = p.refCounter;
-          ++refCounter->refCount;
-        }else{
-          refCounter = nullptr;
-        }
+        refCounter->refCount++;
       }
 
       template <typename U>
         SharedPtr(const SharedPtr<U> & p){
-          assert(false);
-        }
+          //TODO 
+          this->data = p.data;
+        } 
 
       /*
        * Move constructor
@@ -84,10 +88,23 @@ namespace cs540{
        * Copy assignment operator.
        * Must be able to handle self assignment.
        */
-      SharedPtr & operator = (const SharedPtr & p){}
+      SharedPtr & operator = (const SharedPtr & p) 
+      {
+        refCounter = p.refCounter;
+        data = p.data;
+        refCounter->refCount++;
+        return (*this);
+  
+      }
 
       template <typename U>
-        SharedPtr<T> & operator = (const SharedPtr<U> & p){}
+        SharedPtr<T> & operator = (const SharedPtr<U> & p)
+      {
+        refCounter = dynamic_cast<refDataA*>(p.refCounter);
+        data = p.data;
+        refCounter->refCount++;
+        return *this;
+     }
 
       /*
        * Move assignment operator.
@@ -117,7 +134,7 @@ namespace cs540{
        *********************/
 
       T * get() const {
-        return refCounter->data;
+        //return refCounter->data;
       }
 
       T & operator * () const {
