@@ -3,20 +3,20 @@
 
 //Includes
 #include <cstddef>
-#include <iostream>
+#include <atomic>
 #include <assert.h>
 namespace cs540{
 
   class refDataA{
     public:
-      int refCount;
+      std::atomic<int> refCount;
       refDataA() : refCount{1}{}
       virtual ~refDataA(){}
       void inc(){
         ++refCount;
       }
       void dec(){
-        refCount--;
+        --refCount;
       }
   };
 
@@ -42,7 +42,6 @@ namespace cs540{
       T * data;
       /* Constructor */
       SharedPtr() : refCounter{nullptr}, data{nullptr}{
-        std::cout << "in the default constructor" << std::endl; 
       }
 
       /* Explicit Constructor */
@@ -55,8 +54,6 @@ namespace cs540{
           data = static_cast<T*>(dataIn);
           refCounter = new refData<U>{dataIn};
         }
-
-        std::cout << "in the explicit constructor" << std::endl;
       }
 
       /*
@@ -65,41 +62,43 @@ namespace cs540{
        */
       SharedPtr(const SharedPtr &p)
       {
-        std::cout << "in regular copy constructor" << std::endl;
         if(p.data == nullptr){
           refCounter = nullptr;
           data = nullptr;
         }else{
           data = p.data;
           refCounter = p.refCounter;
-          refCounter->inc();
+          ++(refCounter->refCount);
         }
       }
 
       template <typename U>
         SharedPtr(const SharedPtr<U> & p){
-
           if(p.data == nullptr){
             refCounter = nullptr;
             data = nullptr;
           }else{
             data = static_cast<T*>(p.data);
             refCounter = p.refCounter;
-            refCounter->inc(); 
-         }
+            ++(refCounter->refCount); 
+          }
         } 
 
       /*
        * Move constructor
        * The reference count remains unchanged.
        */
-      SharedPtr(const SharedPtr && p){
-        //TODO
+      SharedPtr(SharedPtr && p){
+        refCounter = p.refCounter;
+        data = p.data;
+        //Now set p to null
+        p.refCounter = nullptr;
+        p.data = nullptr;
       }
 
       template <typename U>
-        SharedPtr(const SharedPtr<U> && p){
-          //TODO
+        SharedPtr(SharedPtr<U> && p){
+          assert(false);
         }
 
       /*
@@ -109,9 +108,12 @@ namespace cs540{
       SharedPtr & operator = (const SharedPtr & p) 
       {
         if(&p != this){
+          reset();
           data = p.data;
           refCounter = p.refCounter;
-          refCounter->inc();
+          if(refCounter != nullptr){
+            ++(refCounter->refCount);
+          }
         }
         return *this;
       }
@@ -119,25 +121,31 @@ namespace cs540{
       template <typename U>
         SharedPtr<T> & operator = (const SharedPtr<U> & p)
         {
-          std::cout << "In template assignment op" << std::endl;
-          //Already pointing to something
+          //TODO: check for self assignment before reset
           reset();
           if(p.refCounter != nullptr){
             data = static_cast<T*>(p.data);
             refCounter = p.refCounter;
-            refCounter->inc();
+            ++(refCounter->refCount);
           }
-
           return *this; 
         }
 
       /*
        * Move assignment operator.
        */
-      SharedPtr & operator = (SharedPtr && p){}
+      SharedPtr & operator = (SharedPtr && p){
+        refCounter = p.refCounter;
+        data = p.data;
+        p.refCounter = nullptr;
+        p.data = nullptr;
+        return *this;
+      }
 
       template <typename U>
-        SharedPtr<T> & operator = (SharedPtr<U> && p){}  
+        SharedPtr<T> & operator = (SharedPtr<U> && p){
+        assert(false);
+      }  
 
       /* Destructor */
       ~SharedPtr(){
@@ -170,11 +178,11 @@ namespace cs540{
       /* Replace the pointer with another pointer. */
       template <typename U>
         void reset(U * p){
-        reset();
-        data = static_cast<T *>(p);
-        refCounter = new refData<U>(p);
+          reset();
+          data = static_cast<T *>(p);
+          refCounter = new refData<U>(p);
 
-      }
+        }
 
 
       /*********************
@@ -186,7 +194,6 @@ namespace cs540{
       }
 
       T & operator * () const {
-        
         return *(data);
       }
 
@@ -208,41 +215,51 @@ namespace cs540{
 
   template <typename T1, typename T2>
     bool operator == (const SharedPtr<T1> & p1, const SharedPtr<T2> & p2){
-      return false;
+      return (p1.data == p2.data);
     }
 
   template <typename T>
     bool operator==(const SharedPtr<T> & p, std::nullptr_t np){
-      return false;
+      return (p.data == np);
     }
 
   template <typename T>
     bool operator==(std::nullptr_t np, const SharedPtr<T> & p){
-      return false;
+      return (np == p.data);
     }
 
   template <typename T1, typename T2>
     bool operator!=(const SharedPtr<T1>& p1, const SharedPtr<T2> & p2){
-      return false;
+      return !(p1 == p2);
     }
 
   template <typename T>
-    bool operator!=(const SharedPtr<T> &, std::nullptr_t){
-      return false;
+    bool operator!=(const SharedPtr<T> & p, std::nullptr_t np){
+      return !(p == np);
     }
   template <typename T>
-    bool operator!=(std::nullptr_t, const SharedPtr<T> &){
-      return false;
+    bool operator!=(std::nullptr_t np, const SharedPtr<T> & p){
+      return !(np == p);
     }  
 
   template <typename T, typename U>
     SharedPtr<T> static_pointer_cast(const SharedPtr<U> &sp){
-
+      return SharedPtr<T>(sp);      
     }
 
   template <typename T, typename U>
     SharedPtr<T> dynamic_pointer_cast(const SharedPtr<U> &sp){
-      
+      SharedPtr<T> ret;
+      if(sp.data == nullptr){
+        ret.refCounter = nullptr;
+        ret.data = nullptr;
+      }else{
+        ret.data = dynamic_cast<T*>(sp.data);
+        ret.refCounter = sp.refCounter;
+        ++(ret.refCounter->refCount);
+      }
+      return ret;
+
     }
 
 

@@ -418,11 +418,12 @@ void basic_tests_1() {
         SharedPtr<Derived_polymorphic> sp(new Derived_polymorphic);
         SharedPtr<Base_polymorphic> sp2(sp);
 
-        // SharedPtr<Derived_polymorphic> sp3(sp2); // Should give a syntax error.
+        //SharedPtr<Derived_polymorphic> sp3(sp2); // Should give a syntax error.
         SharedPtr<Derived_polymorphic> sp3(dynamic_pointer_cast<Derived_polymorphic>(sp2));
         SharedPtr<Derived_polymorphic> sp4(static_pointer_cast<Derived_polymorphic>(sp2));
         SharedPtr<Derived2_polymorphic> sp5(dynamic_pointer_cast<Derived2_polymorphic>(sp2));
         assert(!sp5);
+    
     }
 
     // Test to make sure works with MI.
@@ -672,28 +673,28 @@ run(void *vp) {
                 // Assign ptr new TestObj;
                 {
                     int i = rand(0, TABLE_SIZE - 1);
-                    // printf("%d: new %d start\n", (int)tid, i);
+                    //printf("%d: new %d start\n", (int)tid, i);
                     ec = pthread_mutex_lock(&Table[i].lock); assert(ec == 0);
                     if (Table[i].ptr != 0) {
                         Table[i].ptr->reset(new TestObj); // fix
                         counters.assignment_new++;
                     }
                     ec = pthread_mutex_unlock(&Table[i].lock); assert(ec == 0);
-                    // printf("%d: new %d done\n", (int) tid, i);
+                    //printf("%d: new %d done\n", (int) tid, i);
                 }
                 break;
             case 1:
                 // Set ptr to NULL
                 {
                     int i = rand(0, TABLE_SIZE - 1);
-                    // printf("%d: clear %d start\n", (int) tid, i);
+                    //printf("%d: clear %d start\n", (int) tid, i);
                     ec = pthread_mutex_lock(&Table[i].lock); assert(ec == 0);
                     if (Table[i].ptr != 0) {
                         Table[i].ptr->reset();
                         counters.reset++;
                     }
                     ec = pthread_mutex_unlock(&Table[i].lock); assert(ec == 0);
-                    // printf("%d: clear %d done\n", (int) tid, i);
+                    //printf("%d: clear %d done\n", (int) tid, i);
                 }
                 break;
             case 2:
@@ -702,7 +703,7 @@ run(void *vp) {
                     int i = rand(0, TABLE_SIZE - 1);
                     int j = rand(0, TABLE_SIZE - 1);
 
-                    // printf("%d: assign %d=%d start\n", (int) tid, i, j);
+                    //printf("%d: assign %d=%d start\n", (int) tid, i, j);
 
                     // Order to avoid deadlock.
                     if (i <= j) {
@@ -724,7 +725,7 @@ run(void *vp) {
                     if (i != j) {
                         ec = pthread_mutex_unlock(&Table[j].lock); assert(ec == 0);
                     }
-                    // printf("%d: assign %d=%d done\n", (int) tid, i, j);
+                    //printf("%d: assign %d=%d done\n", (int) tid, i, j);
                 }
                 break;
             case 3:
@@ -762,7 +763,7 @@ run(void *vp) {
 
                         ec = pthread_mutex_unlock(&Table[i].lock); assert(ec == 0);
                         ec = pthread_mutex_unlock(&Table[j].lock); assert(ec == 0);
-                        // printf("%d: assign %d=%d done\n", (int) tid, i, j);
+                        //printf("%d: assign %d=%d done\n", (int) tid, i, j);
                     }
                 }
                 break;
