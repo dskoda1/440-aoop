@@ -1,5 +1,5 @@
 XX= clang++
-CXXFLAGS= -std=c++11 -pthread -Wall -Wextra -pedantic -g
+CXXFLAGS= -std=c++1z -pthread -Wall -Wextra -pedantic -g
 
 
 all: Test

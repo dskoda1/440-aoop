@@ -4,19 +4,29 @@
 //Includes
 #include <cstddef>
 #include <atomic>
+#include <mutex>
 #include <assert.h>
 namespace cs540{
 
   class refDataA{
     public:
-      std::atomic<int> refCount;
+      std::mutex countLock;
+      int refCount;
       refDataA() : refCount{1}{}
       virtual ~refDataA(){}
+      int getCount(){
+        return refCount;
+      }
+  
       void inc(){
+        countLock.lock(); 
         ++refCount;
+        countLock.unlock();
       }
       void dec(){
+        countLock.lock();
         --refCount;
+        countLock.unlock();
       }
   };
 
@@ -68,7 +78,7 @@ namespace cs540{
         }else{
           data = p.data;
           refCounter = p.refCounter;
-          ++(refCounter->refCount);
+          refCounter->inc();
         }
       }
 
@@ -80,7 +90,7 @@ namespace cs540{
           }else{
             data = static_cast<T*>(p.data);
             refCounter = p.refCounter;
-            ++(refCounter->refCount); 
+            refCounter->inc();
           }
         } 
 
@@ -98,7 +108,15 @@ namespace cs540{
 
       template <typename U>
         SharedPtr(SharedPtr<U> && p){
-          assert(false);
+          if(p.data == nullptr){
+            refCounter = nullptr;
+            data = nullptr;
+          }else{
+            data = static_cast<T*>(p.data);
+            refCounter = p.refCounter;
+            p.data = nullptr;
+            p.refCounter = nullptr;
+          }
         }
 
       /*
@@ -112,7 +130,8 @@ namespace cs540{
           data = p.data;
           refCounter = p.refCounter;
           if(refCounter != nullptr){
-            ++(refCounter->refCount);
+            refCounter->inc();
+            //++(refCounter->refCount);
           }
         }
         return *this;
@@ -121,12 +140,11 @@ namespace cs540{
       template <typename U>
         SharedPtr<T> & operator = (const SharedPtr<U> & p)
         {
-          //TODO: check for self assignment before reset
           reset();
           if(p.refCounter != nullptr){
             data = static_cast<T*>(p.data);
             refCounter = p.refCounter;
-            ++(refCounter->refCount);
+            refCounter->inc();
           }
           return *this; 
         }
@@ -144,14 +162,23 @@ namespace cs540{
 
       template <typename U>
         SharedPtr<T> & operator = (SharedPtr<U> && p){
-        assert(false);
+        if(p.data == nullptr){
+          data = nullptr;
+          refCounter = nullptr;
+        }else{
+          data = static_cast<T*>(p.data);
+          refCounter = p.refCounter; 
+        }
+
+        p.data = nullptr;
+        p.refCounter = nullptr;
       }  
 
       /* Destructor */
       ~SharedPtr(){
         if(refCounter != nullptr){
           refCounter->dec();
-          if(refCounter->refCount == 0){
+          if(refCounter->getCount() == 0){
             delete refCounter;
             refCounter = nullptr;
           }
@@ -167,7 +194,7 @@ namespace cs540{
       void reset(){
         if(refCounter != nullptr){
           refCounter->dec();
-          if(refCounter->refCount == 0){
+          if(refCounter->getCount() == 0){
             delete refCounter;
           }
         }
@@ -256,7 +283,8 @@ namespace cs540{
       }else{
         ret.data = dynamic_cast<T*>(sp.data);
         ret.refCounter = sp.refCounter;
-        ++(ret.refCounter->refCount);
+        ret.refCounter->inc();
+        //++(ret.refCounter->refCount);
       }
       return ret;
 
