@@ -5,70 +5,126 @@
 #include <assert.h>
 #include <iostream>
 #include <tuple>
-
-
+#include <iomanip>
+#include <string>
+#include <string.h>
+#include <ctype.h>
 #include <typeinfo>
 #include <cxxabi.h>
 #include <type_traits>
-
+#include <exception>
+#include <stdexcept>
 std::ostream &
 operator<<(std::ostream &os, const std::type_info &ti) {
-    int ec;
-    char *p = abi::__cxa_demangle(ti.name(), 0, 0, &ec);
-    assert(ec == 0);
-    std::string s(p);
-    free(p);
-    return os << s;
+  int ec;
+  char *p = abi::__cxa_demangle(ti.name(), 0, 0, &ec);
+  assert(ec == 0);
+  std::string s(p);
+  free(p);
+  return os << s;
 }
 
 namespace cs540{
-  
-  //template <typename T, std::size_t... Is>  
-  class Streamer{
-      std::string s;
-  public:
+  class WrongNumberOfArgs : public std::exception {
 
-      template <std::size_t... Is>
-      Streamer(std::string sIn, std::index_sequence<Is...> tIn){ 
+      virtual const char* what() const throw(){
+        return "You passed an invalid number of args.";
+      }
+  };
+  template <typename ... Ts>
+    class StreamHelper {
+      public:        
+        StreamHelper(std::string & sIn, Ts ... ts) : s{sIn}, tup(ts ...){}
+        inline friend std::ostream& operator << (std::ostream& os, const StreamHelper & sh){
+          sh.interHelp(os, sh.tup, std::make_index_sequence<std::tuple_size<decltype(tup)>::value>());
+          return os;
+        }
+
+        template <typename T, size_t ... Is>
+        std::ostream& interHelp(std::ostream& os, const T & t, const std::index_sequence<Is...> &) const{
+          return helper(os, s, std::get<Is>(t)...);
+        }
+
+        template <typename T, typename ... St>
+        std::ostream & helper(std::ostream & os, std::string str, const T & t, const St ... rest) const{
+          //Find the next instance of a %
+          std::size_t ind = std::string::npos;
+          std::string ret = "";
+
+          while((ind = str.find_first_of("%")) != std::string::npos){
+
+            //Get the part of the string up to the first %
+            std::string pre = str.substr(0, ind);
+            
+            
+            if(pre.at(pre.size() - 1) == '\\'){
+              
+              //Insert pre without the \ and the %
+              os << pre.substr(0, pre.size() - 1);
+              os << "%";
+              //Now reshape str
+              str = str.substr(ind + 1);
+              //Continue
+              continue;
+
+            }else{
+              //Put pre in, the arg, create the ret, and break
+              os << pre;
+              os << t;
+              ret = str.substr(ind + 1); 
+              break;
+            }
+          
+          }
+          if(ind == std::string::npos){
+            throw WrongNumberOfArgs();
+          }
+
+          return helper(os, ret, rest...);
+        }
       
-
-      }  
-
-      
-
-      inline friend std::ostream& operator << (std::ostream & os, Streamer & dt){
-        os << dt.s;
+      std::ostream & helper(std::ostream & os, std::string str) const{
+        //Check for any % first
+        if(str.find_first_of("%") == std::string::npos){
+          os << str;
+        }else{
+          throw WrongNumberOfArgs();  
+        }
         return os;
       }
-
-  };
-
-
-  template <typename T>
-  auto InterHelper(T last){
-    return std::make_tuple(last);
-  }
-
-  template <typename T, typename... Ts>
-  auto InterHelper(T first, Ts... rest){
-    return std::make_tuple(first, InterHelper(rest...));
-  }
+      private:
+        std::string s;
+        std::tuple<Ts...> tup;
+    };
 
 
+
+  //Function template to be called
   template <typename... Ts>
-  auto Interpolate(std::string first, Ts... rest){
-    auto packed = InterHelper(rest...);
-    auto sequence = std::make_index_sequence<std::tuple_size<decltype(packed)>::value>();
-    return Streamer(first, sequence);
-    //return Streamer<decltype(packed), decltype(std::tuple_size<decltype(packed)>::value)>(first, packed);
-    //return Streamer<decltype(std::tuple_size<decltype(packed)>::value)>(first, sequence);
-    //return Streamer<std::tuple_size<decltype(packed)>::value>(first, sequence);
+    auto Interpolate(std::string first, Ts... rest){
+      //Get the variadic args packed into a tuple
+      //auto packed = InterHelper(rest...);
+
+      //Construct and return a streamer object
+      return StreamHelper<Ts...>(first, rest...);
+    }
+
+
+  //Helper functions that pack the variadic args into a tuple
+  template <typename T>
+    auto InterHelper(T last){
+      return std::make_tuple(last);
+    }
+  template <typename T, typename... Ts>
+    auto InterHelper(T first, Ts... rest){
+      return std::make_tuple(first, InterHelper(rest...));
+    }
+
+
+  //FFR
+  auto ffr(std::ostream & (*f)(std::ostream &)){
+    return f;
   }
-
-
-
-  
-
 
 }
 

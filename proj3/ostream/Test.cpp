@@ -1,15 +1,28 @@
 #include "Interpolate.hpp"
 #include <iostream>
 #include <tuple>
-
+#include <sstream>
 
 #include <assert.h>
 
 using namespace std;
 using namespace cs540;
+
 int main(){
 
-  auto i = Interpolate("Hello", std::uppercase, std::hex); 
+  int i = 5;
+  int j = 6;
+  int k = 7;
+  
+  stringstream ss;
+
+  ss << Interpolate(R"(i=%, j=%, 88\%, k=%)", i,j, k) << endl;
+
+  cout << "the results of interpolate are" << endl;
+  cout << ss.str() << endl;
+
+
+
   return 0;
 }
 
