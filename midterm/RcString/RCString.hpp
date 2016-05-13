@@ -12,6 +12,7 @@
 #define CS540_RC_STRING_HPP
 #include <iostream>
 #include <string.h>
+#include <stdlib.h>
 namespace cs540 {
 
 
@@ -19,7 +20,7 @@ namespace cs540 {
     private:
       class stringData {
         friend class RCString;
-        stringData(const char * sIn = "", int lengthIn = 0): data{strdup(sIn)}, length{static_cast<int>(strlen(sIn) + 1)}, refCount{1}{}   
+        stringData(const char * sIn = "", int lengthIn = 0): data(strdup(sIn)), length(static_cast<int>(strlen(sIn) + 1)), refCount(1){}   
 
         ~stringData(){
           free(data);

@@ -26,7 +26,6 @@ operator<<(std::ostream &os, const std::type_info &ti) {
 
 namespace cs540{
   class WrongNumberOfArgs : public std::exception {
-
       virtual const char* what() const throw(){
         return "You passed an invalid number of args.";
       }
@@ -34,9 +33,11 @@ namespace cs540{
   template <typename ... Ts>
     class StreamHelper {
       public:        
-        StreamHelper(std::string & sIn, Ts ... ts) : s{sIn}, tup(ts ...){}
+        StreamHelper(std::string & sIn, const Ts & ... ts) : s{sIn}, tup(ts ...){}
+      
+
         inline friend std::ostream& operator << (std::ostream& os, const StreamHelper & sh){
-          sh.interHelp(os, sh.tup, std::make_index_sequence<std::tuple_size<decltype(tup)>::value>());
+          sh.interHelp(os, sh.tup, std::make_index_sequence<std::tuple_size<decltype(sh.tup)>::value>());
           return os;
         }
 
@@ -100,24 +101,10 @@ namespace cs540{
 
 
   //Function template to be called
-  template <typename... Ts>
-    auto Interpolate(std::string first, Ts... rest){
-      //Get the variadic args packed into a tuple
-      //auto packed = InterHelper(rest...);
-
+  template <typename ... Ts>
+    auto Interpolate(std::string first, const Ts & ... rest){
       //Construct and return a streamer object
-      return StreamHelper<Ts...>(first, rest...);
-    }
-
-
-  //Helper functions that pack the variadic args into a tuple
-  template <typename T>
-    auto InterHelper(T last){
-      return std::make_tuple(last);
-    }
-  template <typename T, typename... Ts>
-    auto InterHelper(T first, Ts... rest){
-      return std::make_tuple(first, InterHelper(rest...));
+      return StreamHelper<const Ts & ...>(first, rest...);
     }
 
 
