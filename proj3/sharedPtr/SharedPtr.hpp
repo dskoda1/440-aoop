@@ -11,22 +11,18 @@ namespace cs540{
   class refDataA{
     public:
       std::mutex countLock;
-      int refCount;
+      std::atomic<int> refCount;
       refDataA() : refCount{1}{}
       virtual ~refDataA(){}
       int getCount(){
         return refCount;
       }
   
-      void inc(){
-        countLock.lock(); 
-        ++refCount;
-        countLock.unlock();
+      int inc(){
+        return ++refCount;
       }
-      void dec(){
-        countLock.lock();
-        --refCount;
-        countLock.unlock();
+      int dec(){
+        return --refCount;
       }
   };
 
@@ -131,7 +127,6 @@ namespace cs540{
           refCounter = p.refCounter;
           if(refCounter != nullptr){
             refCounter->inc();
-            //++(refCounter->refCount);
           }
         }
         return *this;
@@ -160,6 +155,7 @@ namespace cs540{
         return *this;
       }
 
+      
       template <typename U>
         SharedPtr<T> & operator = (SharedPtr<U> && p){
         if(p.data == nullptr){
@@ -169,7 +165,6 @@ namespace cs540{
           data = static_cast<T*>(p.data);
           refCounter = p.refCounter; 
         }
-
         p.data = nullptr;
         p.refCounter = nullptr;
       }  
@@ -177,8 +172,7 @@ namespace cs540{
       /* Destructor */
       ~SharedPtr(){
         if(refCounter != nullptr){
-          refCounter->dec();
-          if(refCounter->getCount() == 0){
+          if(refCounter->dec() == 0){
             delete refCounter;
             refCounter = nullptr;
           }
@@ -193,8 +187,7 @@ namespace cs540{
       /* Reset the pointer. */
       void reset(){
         if(refCounter != nullptr){
-          refCounter->dec();
-          if(refCounter->getCount() == 0){
+          if(refCounter->dec() == 0){
             delete refCounter;
           }
         }

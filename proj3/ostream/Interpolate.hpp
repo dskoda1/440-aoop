@@ -35,19 +35,21 @@ namespace cs540{
       public:        
         StreamHelper(std::string & sIn, const Ts & ... ts) : s{sIn}, tup(ts ...){}
       
-
+        //Ostream operator.. Calls propagate down 
         inline friend std::ostream& operator << (std::ostream& os, const StreamHelper & sh){
           sh.interHelp(os, sh.tup, std::make_index_sequence<std::tuple_size<decltype(sh.tup)>::value>());
           return os;
         }
 
+        //Intermediate unpacking step
         template <typename T, size_t ... Is>
         std::ostream& interHelp(std::ostream& os, const T & t, const std::index_sequence<Is...> &) const{
           return helper(os, s, std::get<Is>(t)...);
         }
 
+        //recursive unpacking method that actually consumes the string
         template <typename T, typename ... St>
-        std::ostream & helper(std::ostream & os, std::string str, const T & t, const St ... rest) const{
+        std::ostream & helper(std::ostream & os, std::string str, const T & t, const St & ... rest) const{
           //Find the next instance of a %
           std::size_t ind = std::string::npos;
           std::string ret = "";
@@ -95,7 +97,7 @@ namespace cs540{
       }
       private:
         std::string s;
-        std::tuple<Ts...> tup;
+        std::tuple<const Ts & ...> tup;
     };
 
 
@@ -104,7 +106,7 @@ namespace cs540{
   template <typename ... Ts>
     auto Interpolate(std::string first, const Ts & ... rest){
       //Construct and return a streamer object
-      return StreamHelper<const Ts & ...>(first, rest...);
+      return StreamHelper<Ts ...>(first, rest...);
     }
 
 
