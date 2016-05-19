@@ -1,5 +1,5 @@
-XX= clang++
-CXXFLAGS= -Wfatal-errors -std=c++1z -pthread -Wall -Wextra -pedantic -g 
+CXX= clang++
+CXXFLAGS= -ftemplate-depth=1000 -Wfatal-errors -std=c++1z -pthread -Wall -Wextra -pedantic -g 
 
 
 all: Test

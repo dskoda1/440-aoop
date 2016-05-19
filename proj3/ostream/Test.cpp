@@ -104,11 +104,11 @@ main(int argc, char **argv) {
     CS540_TEST("", "");
 
     CS540_TEST(R"(\)", R"(\)");
-    CS540_TEST(R"(%)", R"(\%)");
+    //CS540_TEST(R"(%)", R"(\%)");
     CS540_TEST(R"(\\)", R"(\\)");
     CS540_TEST(R"(foo)", R"(foo)");
     CS540_TEST("\n", "\n");
-    CS540_TEST(R"(\%)", R"(\\%)");
+    //CS540_TEST(R"(\%)", R"(\\%)");
     // Test if it returns ostream.
     {
         std::stringstream s;
@@ -153,7 +153,7 @@ main(int argc, char **argv) {
         s << Interpolate("i=%, j=%", 1, 2, 3);
         assert(false);
     } catch (cs540::WrongNumberOfArgs) {
-        std::cout << "Caught exception due to too many args." << std::endl;
+        // std::cout << "Caught exception due to too many args." << std::endl;
     }
 
     // Test too few.
@@ -162,13 +162,13 @@ main(int argc, char **argv) {
         s << Interpolate("i=%, j=%, k=%", 1, 2);
         assert(false);
     } catch (cs540::WrongNumberOfArgs) {
-        std::cout << "Caught exception due to few args." << std::endl;
+        // std::cout << "Caught exception due to few args." << std::endl;
     }
 
     /*
      * Manipulators.
      */
-/*****
+
     CS540_TEST("1, 0, false, true, 0, 1", "%, %, %, %, %, %", true, false, std::boolalpha, false, true, std::noboolalpha, false, true);
     CS540_TEST("0x2134, f78", "%, %", std::showbase, std::hex, 0x2134, std::noshowbase, 0xf78);
     CS540_TEST("1, 1.00000, 1", "%, %, %", 1.0, std::showpoint, 1.0, std::noshowpoint, 1.0);
@@ -278,6 +278,4 @@ main(int argc, char **argv) {
         else
            out << Interpolate("%", Out{1024});
     }
-
-*/
 }

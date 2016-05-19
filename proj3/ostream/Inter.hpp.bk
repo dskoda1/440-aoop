@@ -26,7 +26,6 @@ operator<<(std::ostream &os, const std::type_info &ti) {
 
 namespace cs540{
   class WrongNumberOfArgs : public std::exception {
-
       virtual const char* what() const throw(){
         return "You passed an invalid number of args.";
       }
@@ -34,19 +33,21 @@ namespace cs540{
   template <typename ... Ts>
     class StreamHelper {
       public:        
-        StreamHelper(std::string & sIn, const Ts & ... ts) : s{sIn}, tup(ts ...){}
+        StreamHelper(const std::string & sIn, const Ts & ... ts) : s{sIn}, tup(ts ...){}
+      
+
         inline friend std::ostream& operator << (std::ostream& os, const StreamHelper & sh){
-          sh.interHelp(os, sh.tup, std::make_index_sequence<std::tuple_size<decltype(tup)>::value>());
+          sh.interHelp(os, sh.tup, std::make_index_sequence<std::tuple_size<decltype(sh.tup)>::value>());
           return os;
         }
 
         template <typename T, size_t ... Is>
         std::ostream& interHelp(std::ostream& os, const T & t, const std::index_sequence<Is...> &) const{
-          return helper(os, s, std::get<Is>(t)...);
+          return helper(os, this->s, &std::get<Is>(t)...);
         }
 
         template <typename T, typename ... St>
-        std::ostream & helper(std::ostream & os, std::string str, const T & t, const St & ... rest) const{
+        std::ostream & helper(std::ostream & os, const std::string & str, const T & t, const St & ... rest) const{
           //Find the next instance of a %
           std::size_t ind = std::string::npos;
           std::string ret = "";
@@ -56,14 +57,14 @@ namespace cs540{
             //Get the part of the string up to the first %
             std::string pre = str.substr(0, ind);
             
-            
-            if(checkIfEscaped(pre, pre.size() - 1)){
+            std::string string = str;
+            if(pre.at(pre.size() - 1) == '\\'){
               
               //Insert pre without the \ and the %
               os << pre.substr(0, pre.size() - 1);
               os << "%";
               //Now reshape str
-              str = str.substr(ind + 1);
+              string = string.substr(ind + 1);
               //Continue
               continue;
 
@@ -71,7 +72,7 @@ namespace cs540{
               //Put pre in, the arg, create the ret, and break
               os << pre;
               os << t;
-              ret = str.substr(ind + 1); 
+              ret = string.substr(ind + 1); 
               break;
             }
           
@@ -82,16 +83,8 @@ namespace cs540{
 
           return helper(os, ret, rest...);
         }
-     
-      bool checkIfEscaped(std::string string, size_t index) const {
-        
-        if(index < string.size())
-          return string.at(index) == '\\';
-        else
-          return false;
-      }
- 
-      std::ostream & helper(std::ostream & os, std::string str) const{
+      
+      std::ostream & helper(std::ostream & os, const std::string & str) const{
         //Check for any % first
         if(str.find_first_of("%") == std::string::npos){
           os << str;
@@ -102,18 +95,17 @@ namespace cs540{
       }
       private:
         std::string s;
-        std::tuple<Ts...> tup;
+        std::tuple<const Ts &...> tup;
     };
 
 
 
   //Function template to be called
-  template <typename... Ts>
-    auto Interpolate(std::string first,const Ts & ... rest){
+  template <typename ... Ts>
+    auto Interpolate(const std::string & first, const Ts & ... rest){
       //Construct and return a streamer object
-      return StreamHelper<const Ts & ...>(first, rest...);
+      return StreamHelper<const Ts &...>(first, rest...);
     }
-
 
 
   //FFR
